@@ -1669,12 +1669,28 @@ function loadApiFields() {
   if (status) status.textContent = (k && b) ? '✅ Подключено' : '⚠️ Не настроено — заявки сохраняются только локально';
 }
 
+// ─── SCROLL POSITION RESTORE ───
+window.addEventListener('beforeunload', () => {
+  sessionStorage.setItem('osmos_scroll', window.scrollY);
+});
+
 // ─── INIT ───
 window.addEventListener('load', () => {
   applyTexts();
   renderFeaturesGrid();
   loadLeadsFromCloud();
   initWelcomeConsent();
+
+  // Восстанавливаем позицию скролла после обновления страницы
+  const savedScroll = sessionStorage.getItem('osmos_scroll');
+  if (savedScroll) {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, parseInt(savedScroll, 10));
+    sessionStorage.removeItem('osmos_scroll');
+    requestAnimationFrame(() => {
+      document.documentElement.style.scrollBehavior = '';
+    });
+  }
 });
 
 // Mark leads read when opening leads tab
