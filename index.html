@@ -158,23 +158,123 @@ section{padding:100px 5%;position:relative;z-index:1}
 .section-sub{font-size:1rem;color:var(--text2);line-height:1.7;font-weight:300;max-width:560px}
 
 /* ─── FEATURES ─── */
-#features{background:var(--cream)}
+#features{background:var(--ink);position:relative;overflow:hidden}
+#features .section-label{color:rgba(255,255,255,0.4)}
+#features .section-label::before{background:rgba(255,255,255,0.3)}
+#features .section-title{color:#fff}
+#features .section-sub{color:rgba(255,255,255,0.5)}
+
+/* Фоновая сетка */
+#features::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(10,124,110,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,124,110,0.06) 1px, transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+/* Светящийся акцент */
+#features::after{
+  content:'';position:absolute;
+  width:600px;height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(10,124,110,0.15) 0%, transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;z-index:0;
+}
+
 .features-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px;
-  margin-top:60px;border-radius:var(--r2);overflow:hidden;
-  border:1px solid rgba(10,124,110,0.10);
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;
+  margin-top:64px;
+  position:relative;z-index:1;
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.04);
 }
 .feature-card{
-  background:var(--white);padding:36px 32px;
-  transition:background 0.3s;cursor:default;
+  background:rgba(255,255,255,0.02);
+  padding:40px 36px;
+  position:relative;
+  overflow:hidden;
+  cursor:default;
+  transition:background 0.4s ease;
 }
-.feature-card:hover{background:var(--teal-xpale)}
+/* Линия-разделитель */
+.feature-card::before{
+  content:'';
+  position:absolute;inset:0;
+  border:1px solid rgba(255,255,255,0.05);
+  pointer-events:none;
+}
+/* Свечение при hover */
+.feature-card::after{
+  content:'';
+  position:absolute;
+  width:200px;height:200px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(10,124,110,0.25) 0%, transparent 70%);
+  top:var(--my,-100px);left:var(--mx,-100px);
+  transform:translate(-50%,-50%);
+  opacity:0;
+  transition:opacity 0.4s ease;
+  pointer-events:none;
+}
+.feature-card:hover{background:rgba(10,124,110,0.08)}
+.feature-card:hover::after{opacity:1}
+
+/* Номер карточки */
+.feature-num{
+  position:absolute;top:20px;right:24px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:3.5rem;font-weight:700;line-height:1;
+  color:rgba(255,255,255,0.04);
+  transition:color 0.4s;
+  user-select:none;
+}
+.feature-card:hover .feature-num{color:rgba(10,124,110,0.18)}
+
 .feature-icon{
-  font-size:2rem;margin-bottom:18px;display:block;
-  filter:drop-shadow(0 2px 8px rgba(10,124,110,0.2));
+  font-size:1.8rem;margin-bottom:20px;display:block;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
-.feature-title{font-size:1.05rem;font-weight:600;margin-bottom:10px;color:var(--text)}
-.feature-desc{font-size:0.88rem;color:var(--text2);line-height:1.65;font-weight:300}
+.feature-card:hover .feature-icon{transform:scale(1.2) rotate(-5deg)}
+
+/* Тонкая линия-акцент */
+.feature-line{
+  width:28px;height:2px;
+  background:linear-gradient(90deg,var(--teal),var(--teal-light));
+  border-radius:2px;margin-bottom:16px;
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.4s 0.1s ease;
+}
+.feature-card:hover .feature-line{transform:scaleX(1)}
+
+.feature-title{
+  font-size:1rem;font-weight:600;margin-bottom:10px;
+  color:rgba(255,255,255,0.9);
+  transition:color 0.3s;
+}
+.feature-card:hover .feature-title{color:#fff}
+.feature-desc{font-size:0.84rem;color:rgba(255,255,255,0.4);line-height:1.7;font-weight:300;transition:color 0.3s}
+.feature-card:hover .feature-desc{color:rgba(255,255,255,0.6)}
+
+/* Анимация появления */
+.feature-card{
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity 0.5s ease, transform 0.5s ease, background 0.4s ease;
+}
+.feature-card.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:580px){
+  .features-grid{grid-template-columns:1fr}
+}
 
 /* ─── PRICING ─── */
 #pricing{background:var(--paper)}
@@ -736,32 +836,44 @@ footer{
   <p class="section-sub" id="features-sub">Современный формат занятий с опорой на результат. Каждый ученик получает персональный трек развития.</p>
   <div class="features-grid" id="features-grid">
     <div class="feature-card">
+      <span class="feature-num">01</span>
       <span class="feature-icon">🧬</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Личный кабинет ученика</div>
       <div class="feature-desc">Все материалы, домашние задания и прогресс в одном месте. Удобный доступ с любого устройства.</div>
     </div>
     <div class="feature-card">
+      <span class="feature-num">02</span>
       <span class="feature-icon">📝</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Интерактивные тесты</div>
       <div class="feature-desc">Тренировочные задания в формате ЕГЭ/ОГЭ с моментальной проверкой и разбором ошибок.</div>
     </div>
     <div class="feature-card">
+      <span class="feature-num">03</span>
       <span class="feature-icon">📊</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Отслеживание прогресса</div>
       <div class="feature-desc">Наглядная статистика по темам и динамика роста баллов. Видите, как растёт уровень знаний.</div>
     </div>
     <div class="feature-card">
+      <span class="feature-num">04</span>
       <span class="feature-icon">🗓</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Расписание и уведомления</div>
       <div class="feature-desc">Удобное бронирование занятий, напоминания о домашних заданиях и предстоящих уроках.</div>
     </div>
     <div class="feature-card">
+      <span class="feature-num">05</span>
       <span class="feature-icon">💬</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Прямая связь с педагогом</div>
       <div class="feature-desc">Задавайте вопросы между занятиями. Быстрые ответы и поддержка при подготовке к экзаменам.</div>
     </div>
     <div class="feature-card">
+      <span class="feature-num">06</span>
       <span class="feature-icon">🏆</span>
+      <div class="feature-line"></div>
       <div class="feature-title">Пробные экзамены</div>
       <div class="feature-desc">Полноценные пробники в условиях, максимально приближенных к реальному ЕГЭ и ОГЭ.</div>
     </div>
@@ -1598,12 +1710,22 @@ function setText(id, val) {
 function renderFeaturesGrid() {
   const grid = document.getElementById('features-grid');
   grid.innerHTML = features.map((f,i) => `
-    <div class="feature-card">
+    <div class="feature-card visible">
+      <span class="feature-num">${String(i+1).padStart(2,'0')}</span>
       <span class="feature-icon">${esc(f.icon)}</span>
+      <div class="feature-line"></div>
       <div class="feature-title">${esc(f.title)}</div>
       <div class="feature-desc">${esc(f.desc)}</div>
     </div>
   `).join('');
+  // Переинициализируем mouse glow для новых карточек
+  grid.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    });
+  });
 }
 function renderFeaturesEdit() {
   const list = document.getElementById('features-edit-list');
@@ -1717,6 +1839,34 @@ window.addEventListener('load', async () => {
     if (page) { sessionStorage.removeItem('osmos_admin_page'); showAdminPage(page); }
   }
 });
+
+// ─── FEATURES MOUSE GLOW + SCROLL REVEAL ───
+(function() {
+  // Mouse glow
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    });
+  });
+
+  // Scroll reveal с задержкой для каждой карточки
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cards = entry.target.querySelectorAll('.feature-card');
+        cards.forEach((card, i) => {
+          setTimeout(() => card.classList.add('visible'), i * 80);
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {threshold: 0.1});
+
+  const grid = document.getElementById('features-grid');
+  if (grid) observer.observe(grid);
+})();
 
 // Mark leads read when opening leads tab
 document.getElementById('anav-leads').addEventListener('click', () => {
