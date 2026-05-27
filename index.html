@@ -1088,30 +1088,18 @@ footer{
       <!-- EDIT FEATURES -->
       <div class="admin-page" id="apage-edit-api">
         <div class="edit-section">
-          <div class="edit-section-title">🔗 Настройка облачного хранилища заявок</div>
-          <p style="font-size:0.83rem;color:var(--text2);line-height:1.6;margin-bottom:20px">
-            Чтобы заявки были видны в любом браузере, нужно один раз настроить бесплатный JSONBin.io.<br>
-            <strong>Инструкция:</strong>
+          <div class="edit-section-title">🔥 Firebase Realtime Database</div>
+          <p style="font-size:0.83rem;color:var(--text2);line-height:1.6;margin-bottom:16px">
+            Заявки хранятся в Firebase и обновляются в реальном времени — без задержек и обновлений страницы.
           </p>
-          <ol style="font-size:0.83rem;color:var(--text2);line-height:2;padding-left:20px;margin-bottom:20px">
-            <li>Зайдите на <a href="https://jsonbin.io" target="_blank" style="color:var(--teal)">jsonbin.io</a> → Sign Up (бесплатно)</li>
-            <li>Нажмите <b>API Keys</b> → скопируйте <b>Master Key</b></li>
-            <li>Нажмите <b>Bins</b> → <b>Create Bin</b> → вставьте <code style="background:var(--cream);padding:2px 6px;border-radius:4px">{"leads":[]}</code> → Save</li>
-            <li>Скопируйте <b>BIN ID</b> из URL (вида <code style="background:var(--cream);padding:2px 6px;border-radius:4px">64abc123...</code>)</li>
-            <li>Вставьте оба значения ниже и нажмите Сохранить</li>
-          </ol>
-          <div class="edit-grid">
-            <div class="edit-field"><label>Master Key</label><input id="e-jsonbin-key" placeholder="$2a$10$..."></div>
-            <div class="edit-field"><label>Bin ID</label><input id="e-jsonbin-bin" placeholder="64abc123..."></div>
-          </div>
-          <button class="btn-save" onclick="saveApiSettings()">Сохранить и подключить <span class="save-ok" id="sok-api">✓ Сохранено</span></button>
-        </div>
-        <div class="edit-section" style="margin-top:20px;background:var(--teal-xpale);border-color:var(--teal-pale)">
-          <div style="font-size:0.83rem;color:var(--teal);line-height:1.6">
-            <strong>Статус:</strong> <span id="api-status">проверяется...</span>
+          <div class="edit-section" style="background:var(--teal-xpale);border-color:var(--teal-pale);margin-bottom:0">
+            <div style="font-size:0.83rem;color:var(--teal);line-height:1.8">
+              <strong>База данных:</strong><br>
+              <code style="background:rgba(10,124,110,0.1);padding:4px 10px;border-radius:6px;font-size:0.8rem">https://osmos-ea60f-default-rtdb.europe-west1.firebasedatabase.app</code><br><br>
+              <strong>Статус:</strong> <span id="api-status">✅ Подключено (Firebase)</span>
+            </div>
           </div>
         </div>
-      </div>
       <div class="admin-page" id="apage-edit-features">
         <div class="edit-section">
           <div class="edit-section-title">⚙️ Карточки возможностей (6 карточек)</div>
@@ -1139,65 +1127,86 @@ let leads = [];
 
 // ─── CLOUD STORAGE (JSONBin.io) ───
 // Бесплатное облачное хранилище — заявки видны в любом браузере
-const JSONBIN_KEY = localStorage.getItem('osmos_jsonbin_key') || '$2a$10$Nh7M4X0OHtdOVhiBo/DDQebNKI7MWqNi2f1oDVw6Bzs9nckEDiF/K';
-const JSONBIN_BIN = localStorage.getItem('osmos_jsonbin_bin') || '6a168533f47d5c455c3bc80f';
-let cloudReady = false;
+// ─── FIREBASE REALTIME DATABASE ───
+const FB_URL = 'https://osmos-ea60f-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_ADMIN_NODE = 'admin_leads_osmos2024'; // секретный узел для чтения
+let fbUnsubscribe = null;
 
-async function loadLeadsFromCloud() {
-  if (!JSONBIN_KEY || !JSONBIN_BIN) {
-    leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
-    renderLeads(); updateLeadsBadge(); return;
-  }
+// Подписка на изменения в реальном времени (SSE/EventSource) — читаем из секретного узла
+function subscribeToLeads() {
+  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
   try {
-    const res = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN + '/latest', {
-      headers: {'X-Master-Key': JSONBIN_KEY, 'X-Bin-Meta': 'false'}
+    const es = new EventSource(FB_URL + '/' + FB_ADMIN_NODE + '.json');
+    es.addEventListener('put', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        const val = data.data;
+        if (val && typeof val === 'object' && !Array.isArray(val)) {
+          leads = Object.values(val).sort((a, b) => b.id - a.id);
+        } else {
+          leads = [];
+        }
+        localStorage.setItem('osmos_leads', JSON.stringify(leads));
+        renderLeads();
+        updateLeadsBadge();
+      } catch(err) { console.warn('Firebase parse error:', err); }
     });
+    es.addEventListener('patch', (e) => {
+      loadLeadsOnce();
+    });
+    es.onerror = () => {
+      es.close();
+      setTimeout(subscribeToLeads, 3000);
+    };
+    fbUnsubscribe = () => es.close();
+  } catch(e) {
+    console.warn('Firebase subscribe error:', e);
+  }
+}
+
+async function loadLeadsOnce() {
+  try {
+    const res = await fetch(FB_URL + '/' + FB_ADMIN_NODE + '.json');
     if (res.ok) {
-      const data = await res.json();
-      // data может быть {leads:[...]} или просто массивом — обрабатываем оба варианта
-      if (Array.isArray(data)) {
-        leads = data;
-      } else if (data && Array.isArray(data.leads)) {
-        leads = data.leads;
-      } else if (data && data.record) {
-        leads = Array.isArray(data.record.leads) ? data.record.leads : [];
+      const val = await res.json();
+      if (val && typeof val === 'object' && !Array.isArray(val)) {
+        leads = Object.values(val).sort((a, b) => b.id - a.id);
       } else {
         leads = [];
       }
-      cloudReady = true;
-    } else if (res.status === 404) {
-      // Bin существует но пустой — инициализируем
-      await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY},
-        body: JSON.stringify({leads: []})
-      });
-      leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
-      cloudReady = true;
-    } else {
-      leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+      localStorage.setItem('osmos_leads', JSON.stringify(leads));
+      renderLeads();
+      updateLeadsBadge();
     }
   } catch(e) {
-    console.warn('Cloud load error:', e);
     leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+    renderLeads(); updateLeadsBadge();
   }
-  renderLeads();
-  updateLeadsBadge();
+}
+
+async function loadLeadsFromCloud() {
+  await loadLeadsOnce();
 }
 
 async function saveLeadsToCloud() {
   localStorage.setItem('osmos_leads', JSON.stringify(leads));
-  const key = JSONBIN_KEY;
-  const bin = JSONBIN_BIN;
-  if (!key || !bin) return;
+  const lead = leads[0]; // только что добавленная (unshift)
+  if (!lead) return;
   try {
-    const res = await fetch('https://api.jsonbin.io/v3/b/' + bin, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json', 'X-Master-Key': key},
-      body: JSON.stringify({leads})
-    });
-    if (res.ok) cloudReady = true;
-  } catch(e) { console.warn('Cloud save error:', e); }
+    // Пишем в оба узла: /leads (защищён от чтения) и секретный /admin_leads_osmos2024
+    await Promise.all([
+      fetch(FB_URL + '/leads/' + lead.id + '.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(lead)
+      }),
+      fetch(FB_URL + '/' + FB_ADMIN_NODE + '/' + lead.id + '.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(lead)
+      })
+    ]);
+  } catch(e) { console.warn('Firebase save error:', e); }
 }
 
 const defaultFeatures = [
@@ -1368,16 +1377,14 @@ function openAdminPanel() {
   document.body.style.overflow = 'hidden';
   renderLeads();
   updateLeadsBadge();
-  loadLeadsFromCloud();
+  subscribeToLeads(); // реальное время — без polling
   renderFeaturesEdit();
   loadAdminFields();
-  loadApiFields();
-  startAdminRefresh();
 }
 function closeAdminPanel() {
   document.getElementById('admin-panel').classList.remove('open');
   document.body.style.overflow = '';
-  stopAdminRefresh();
+  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
 }
 
 function showAdminPage(id) {
@@ -1430,21 +1437,37 @@ function renderLeads() {
 
 function deleteLead(id) {
   leads = leads.filter(l => l.id !== id);
-  saveLeadsToCloud();
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  // Удаляем из обоих узлов Firebase
+  Promise.all([
+    fetch(FB_URL + '/leads/' + id + '.json', { method: 'DELETE' }),
+    fetch(FB_URL + '/' + FB_ADMIN_NODE + '/' + id + '.json', { method: 'DELETE' })
+  ]).catch(e => console.warn('Firebase delete error:', e));
   renderLeads();
   updateLeadsBadge();
 }
 function clearAllLeads() {
   if (!confirm('Удалить все заявки?')) return;
   leads = [];
-  saveLeadsToCloud();
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  // Очищаем оба узла
+  Promise.all([
+    fetch(FB_URL + '/leads.json', { method: 'DELETE' }),
+    fetch(FB_URL + '/' + FB_ADMIN_NODE + '.json', { method: 'DELETE' })
+  ]).catch(e => console.warn('Firebase clear error:', e));
   renderLeads();
   updateLeadsBadge();
   showToast('🗑 Заявки очищены');
 }
 function markLeadsRead() {
   leads = leads.map(l => ({...l, isNew: false}));
-  saveLeadsToCloud();
+  // Обновляем флаг isNew в обоих узлах
+  leads.forEach(l => {
+    const body = JSON.stringify(l);
+    fetch(FB_URL + '/leads/' + l.id + '.json', { method: 'PUT', headers: {'Content-Type':'application/json'}, body });
+    fetch(FB_URL + '/' + FB_ADMIN_NODE + '/' + l.id + '.json', { method: 'PUT', headers: {'Content-Type':'application/json'}, body });
+  });
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
   updateLeadsBadge();
 }
 function updateLeadsBadge() {
@@ -1661,31 +1684,6 @@ function closeWelcomeConsent() {
 }
 
 
-// ─── API SETTINGS ───
-function saveApiSettings() {
-  const key = document.getElementById('e-jsonbin-key').value.trim();
-  const bin = document.getElementById('e-jsonbin-bin').value.trim();
-  if (!key || !bin) { showToast('⚠️ Заполните оба поля'); return; }
-  localStorage.setItem('osmos_jsonbin_key', key);
-  localStorage.setItem('osmos_jsonbin_bin', bin);
-  // Apply immediately
-  const script = document.querySelector('script');
-  flashOk('sok-api');
-  showToast('✓ Настройки сохранены. Перезагрузите страницу.');
-  setTimeout(() => location.reload(), 1500);
-}
-
-function loadApiFields() {
-  const k = localStorage.getItem('osmos_jsonbin_key');
-  const b = localStorage.getItem('osmos_jsonbin_bin');
-  if (document.getElementById('e-jsonbin-key')) {
-    document.getElementById('e-jsonbin-key').value = k || '';
-    document.getElementById('e-jsonbin-bin').value = b || '';
-  }
-  const status = document.getElementById('api-status');
-  if (status) status.textContent = (k && b) ? '✅ Подключено' : '⚠️ Не настроено — заявки сохраняются только локально';
-}
-
 // ─── SCROLL + ADMIN STATE RESTORE ───
 window.addEventListener('beforeunload', () => {
   sessionStorage.setItem('osmos_scroll', window.scrollY);
@@ -1696,19 +1694,6 @@ window.addEventListener('beforeunload', () => {
     if (activePage) sessionStorage.setItem('osmos_admin_page', activePage.id.replace('apage-', ''));
   }
 });
-
-// ─── ADMIN AUTO-REFRESH ───
-let adminRefreshTimer = null;
-function startAdminRefresh() {
-  stopAdminRefresh();
-  adminRefreshTimer = setInterval(async () => {
-    if (!document.getElementById('admin-panel').classList.contains('open')) { stopAdminRefresh(); return; }
-    await loadLeadsFromCloud();
-  }, 15000);
-}
-function stopAdminRefresh() {
-  if (adminRefreshTimer) { clearInterval(adminRefreshTimer); adminRefreshTimer = null; }
-}
 
 // ─── INIT ───
 window.addEventListener('load', async () => {
