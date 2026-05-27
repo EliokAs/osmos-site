@@ -1150,15 +1150,35 @@ async function loadLeadsFromCloud() {
   }
   try {
     const res = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN + '/latest', {
-      headers: {'X-Master-Key': JSONBIN_KEY}
+      headers: {'X-Master-Key': JSONBIN_KEY, 'X-Bin-Meta': 'false'}
     });
     if (res.ok) {
       const data = await res.json();
-      leads = data.record.leads || [];
+      // data может быть {leads:[...]} или просто массивом — обрабатываем оба варианта
+      if (Array.isArray(data)) {
+        leads = data;
+      } else if (data && Array.isArray(data.leads)) {
+        leads = data.leads;
+      } else if (data && data.record) {
+        leads = Array.isArray(data.record.leads) ? data.record.leads : [];
+      } else {
+        leads = [];
+      }
       cloudReady = true;
+    } else if (res.status === 404) {
+      // Bin существует но пустой — инициализируем
+      await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY},
+        body: JSON.stringify({leads: []})
+      });
+      leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+      cloudReady = true;
+    } else {
+      leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
     }
   } catch(e) {
-    // fallback to localStorage
+    console.warn('Cloud load error:', e);
     leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
   }
   renderLeads();
@@ -1296,12 +1316,16 @@ async function sendToTelegram(lead) {
     '🗂 <b>Тариф:</b> ' + lead.plan + '\n' +
     '🕐 <b>Время:</b> ' + lead.date + ' ' + lead.time;
   try {
-    await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
+    const res = await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({chat_id: TG_CHAT, text, parse_mode: 'HTML'})
     });
-  } catch(e) { console.warn('Telegram error:', e); }
+    const json = await res.json();
+    if (!json.ok) {
+      console.warn('Telegram API error:', JSON.stringify(json));
+    }
+  } catch(e) { console.warn('Telegram fetch error:', e); }
 }
 
 // ─── ADMIN LOGIN ───
