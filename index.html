@@ -285,9 +285,9 @@ section{padding:100px 5%;position:relative;z-index:1}
 .modal-bg{
   position:fixed;inset:0;z-index:2000;background:rgba(13,17,23,0.6);
   backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;
-  padding:20px;
+  padding:20px;pointer-events:none;
 }
-.modal-bg.open{display:flex}
+.modal-bg.open{display:flex;pointer-events:auto;}
 .modal{
   background:var(--white);border-radius:var(--r2);padding:48px 44px;
   max-width:480px;width:100%;position:relative;
@@ -346,9 +346,9 @@ section{padding:100px 5%;position:relative;z-index:1}
 /* ─── ADMIN PANEL ─── */
 #admin-login{
   position:fixed;inset:0;z-index:3000;background:var(--ink);
-  display:none;align-items:center;justify-content:center;
+  display:none;align-items:center;justify-content:center;pointer-events:none;
 }
-#admin-login.open{display:flex}
+#admin-login.open{display:flex;pointer-events:auto;}
 .admin-login-box{
   background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
   border-radius:24px;padding:48px 44px;width:360px;text-align:center;
@@ -378,9 +378,9 @@ section{padding:100px 5%;position:relative;z-index:1}
 #admin-panel{
   position:fixed;inset:0;z-index:2500;
   background:var(--paper);display:none;overflow:hidden;
-  flex-direction:row;
+  flex-direction:row;pointer-events:none;
 }
-#admin-panel.open{display:flex}
+#admin-panel.open{display:flex;pointer-events:auto;}
 .admin-sidebar{
   width:260px;flex-shrink:0;background:var(--ink);color:#fff;
   display:flex;flex-direction:column;overflow:hidden;
@@ -557,6 +557,8 @@ footer{
   position:fixed;inset:0;z-index:5000;
   background:rgba(13,17,23,0.72);backdrop-filter:blur(12px);
   display:none;align-items:center;justify-content:center;padding:20px;
+  pointer-events:none;visibility:hidden;
+  opacity:0;transition:opacity 0.35s ease;
 }
 #welcome-consent-box{
   background:var(--white);border-radius:28px;padding:48px 44px;
@@ -1236,8 +1238,6 @@ async function sendToTelegram(lead) {
   } catch(e) { console.warn('Telegram error:', e); }
 }
 
-}
-
 // ─── ADMIN LOGIN ───
 function openAdminLogin() {
   document.getElementById('admin-login').classList.add('open');
@@ -1517,9 +1517,16 @@ function initWelcomeConsent() {
   const bg = document.getElementById('welcome-consent-bg');
   if (!localStorage.getItem('osmos_welcome_consent')) {
     bg.style.display = 'flex';
+    bg.style.visibility = 'visible';
+    bg.style.pointerEvents = 'auto';
+    // small delay so CSS transition fires
+    requestAnimationFrame(() => { bg.style.opacity = '1'; });
     document.body.style.overflow = 'hidden';
   } else {
     bg.style.display = 'none';
+    bg.style.visibility = 'hidden';
+    bg.style.pointerEvents = 'none';
+    bg.style.opacity = '0';
   }
 }
 function toggleWcBtn(checkbox) {
@@ -1537,10 +1544,13 @@ function acceptWelcomeConsent() {
 }
 function closeWelcomeConsent() {
   const bg = document.getElementById('welcome-consent-bg');
-  bg.style.transition = 'opacity 0.35s ease';
   bg.style.opacity = '0';
+  bg.style.pointerEvents = 'none';
   document.body.style.overflow = '';
-  setTimeout(() => { bg.style.display = 'none'; }, 350);
+  setTimeout(() => {
+    bg.style.display = 'none';
+    bg.style.visibility = 'hidden';
+  }, 350);
 }
 
 // ─── INIT ───
