@@ -615,7 +615,7 @@ footer{
     <label class="wc-check-wrap">
       <input type="checkbox" id="wc-checkbox" onchange="toggleWcBtn(this)">
       <span class="wc-check-label">
-        Я даю согласие на обработку <a href="privacy.html" target="_blank" onclick="event.stopPropagation()">персональных данных</a> и принимаю условия <a href="offer.html" target="_blank" onclick="event.stopPropagation()">договора оферты</a>
+        Я даю согласие на обработку <a href="privacy.pdf" target="_blank" onclick="event.stopPropagation()">персональных данных</a> и принимаю условия <a href="offer.pdf" target="_blank" onclick="event.stopPropagation()">договора оферты</a>
       </span>
     </label>
     <button class="btn-wc-accept" id="btn-wc-accept" onclick="acceptWelcomeConsent()">Принять и продолжить</button>
@@ -916,7 +916,7 @@ footer{
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:14px;background:var(--paper);border-radius:12px;border:1.5px solid rgba(10,124,110,0.10)" id="consent-wrap">
         <input type="checkbox" id="f-consent" style="width:18px;height:18px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;cursor:pointer">
         <label for="f-consent" style="font-size:0.78rem;color:var(--text2);line-height:1.55;cursor:pointer;font-weight:400">
-          Я согласен(а) с <a href="privacy.html" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">политикой обработки персональных данных</a> и принимаю условия <a href="offer.html" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">договора оферты</a>
+          Я согласен(а) с <a href="privacy.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">политикой обработки персональных данных</a> и принимаю условия <a href="offer.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">договора оферты</a>
         </label>
       </div>
       <button class="btn-submit" onclick="submitForm()">Отправить заявку →</button>
@@ -1204,10 +1204,38 @@ function submitForm() {
   leads.unshift(lead);
   localStorage.setItem('osmos_leads', JSON.stringify(leads));
   updateLeadsBadge();
+  renderLeads();
+
+  // Отправка в Telegram
+  sendToTelegram(lead);
 
   document.getElementById('modal-form-wrap').style.display = 'none';
   document.getElementById('success-msg').style.display = 'block';
   showToast('🎉 Заявка отправлена!');
+}
+
+// ─── TELEGRAM NOTIFY ───
+const TG_TOKEN = '7957868460:AAGbCduwJ46_6aLa3DyH7B6yXwCbpUXizsU';
+const TG_CHAT  = '471776707';
+
+async function sendToTelegram(lead) {
+  const text =
+    '📬 <b>Новая заявка с сайта Осмос</b>\n\n' +
+    '👤 <b>Имя:</b> ' + lead.name + '\n' +
+    '📚 <b>Предмет:</b> ' + lead.subject + '\n' +
+    '💬 <b>Связь:</b> ' + lead.method + '\n' +
+    '📞 <b>Контакт:</b> ' + lead.contact + '\n' +
+    '🗂 <b>Тариф:</b> ' + lead.plan + '\n' +
+    '🕐 <b>Время:</b> ' + lead.date + ' ' + lead.time;
+  try {
+    await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({chat_id: TG_CHAT, text, parse_mode: 'HTML'})
+    });
+  } catch(e) { console.warn('Telegram error:', e); }
+}
+
 }
 
 // ─── ADMIN LOGIN ───
@@ -1233,6 +1261,7 @@ function tryAdminLogin() {
 
 // ─── ADMIN PANEL ───
 function openAdminPanel() {
+  renderLeads();
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
   renderLeads();
@@ -1518,6 +1547,7 @@ function closeWelcomeConsent() {
 window.addEventListener('load', () => {
   applyTexts();
   renderFeaturesGrid();
+  renderLeads();
   updateLeadsBadge();
   initWelcomeConsent();
 });
