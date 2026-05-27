@@ -1086,6 +1086,32 @@ footer{
       </div>
 
       <!-- EDIT FEATURES -->
+      <div class="admin-page" id="apage-edit-api">
+        <div class="edit-section">
+          <div class="edit-section-title">🔗 Настройка облачного хранилища заявок</div>
+          <p style="font-size:0.83rem;color:var(--text2);line-height:1.6;margin-bottom:20px">
+            Чтобы заявки были видны в любом браузере, нужно один раз настроить бесплатный JSONBin.io.<br>
+            <strong>Инструкция:</strong>
+          </p>
+          <ol style="font-size:0.83rem;color:var(--text2);line-height:2;padding-left:20px;margin-bottom:20px">
+            <li>Зайдите на <a href="https://jsonbin.io" target="_blank" style="color:var(--teal)">jsonbin.io</a> → Sign Up (бесплатно)</li>
+            <li>Нажмите <b>API Keys</b> → скопируйте <b>Master Key</b></li>
+            <li>Нажмите <b>Bins</b> → <b>Create Bin</b> → вставьте <code style="background:var(--cream);padding:2px 6px;border-radius:4px">{"leads":[]}</code> → Save</li>
+            <li>Скопируйте <b>BIN ID</b> из URL (вида <code style="background:var(--cream);padding:2px 6px;border-radius:4px">64abc123...</code>)</li>
+            <li>Вставьте оба значения ниже и нажмите Сохранить</li>
+          </ol>
+          <div class="edit-grid">
+            <div class="edit-field"><label>Master Key</label><input id="e-jsonbin-key" placeholder="$2a$10$..."></div>
+            <div class="edit-field"><label>Bin ID</label><input id="e-jsonbin-bin" placeholder="64abc123..."></div>
+          </div>
+          <button class="btn-save" onclick="saveApiSettings()">Сохранить и подключить <span class="save-ok" id="sok-api">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section" style="margin-top:20px;background:var(--teal-xpale);border-color:var(--teal-pale)">
+          <div style="font-size:0.83rem;color:var(--teal);line-height:1.6">
+            <strong>Статус:</strong> <span id="api-status">проверяется...</span>
+          </div>
+        </div>
+      </div>
       <div class="admin-page" id="apage-edit-features">
         <div class="edit-section">
           <div class="edit-section-title">⚙️ Карточки возможностей (6 карточек)</div>
@@ -1109,7 +1135,47 @@ footer{
 const ADMIN_LOGIN = 'admin';
 const ADMIN_PASS = 'osmos2024';
 let currentPlan = '';
-let leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+let leads = [];
+
+// ─── CLOUD STORAGE (JSONBin.io) ───
+// Бесплатное облачное хранилище — заявки видны в любом браузере
+const JSONBIN_KEY = localStorage.getItem('osmos_jsonbin_key') || '$2a$10$Nh7M4X0OHtdOVhiBo/DDQebNKI7MWqNi2f1oDVw6Bzs9nckEDiF/K';
+const JSONBIN_BIN = localStorage.getItem('osmos_jsonbin_bin') || '6a168533f47d5c455c3bc80f';
+let cloudReady = false;
+
+async function loadLeadsFromCloud() {
+  if (!JSONBIN_KEY || !JSONBIN_BIN) {
+    leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+    renderLeads(); updateLeadsBadge(); return;
+  }
+  try {
+    const res = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN + '/latest', {
+      headers: {'X-Master-Key': JSONBIN_KEY}
+    });
+    if (res.ok) {
+      const data = await res.json();
+      leads = data.record.leads || [];
+      cloudReady = true;
+    }
+  } catch(e) {
+    // fallback to localStorage
+    leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+  }
+  renderLeads();
+  updateLeadsBadge();
+}
+
+async function saveLeadsToCloud() {
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  if (!cloudReady) return;
+  try {
+    await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY},
+      body: JSON.stringify({leads})
+    });
+  } catch(e) { console.warn('Cloud save error:', e); }
+}
 
 const defaultFeatures = [
   {icon:'🧬', title:'Личный кабинет ученика', desc:'Все материалы, домашние задания и прогресс в одном месте. Удобный доступ с любого устройства.'},
@@ -1204,7 +1270,7 @@ function submitForm() {
     isNew: true
   };
   leads.unshift(lead);
-  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  saveLeadsToCloud();
   updateLeadsBadge();
   renderLeads();
 
@@ -1261,13 +1327,12 @@ function tryAdminLogin() {
 
 // ─── ADMIN PANEL ───
 function openAdminPanel() {
-  renderLeads();
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
-  renderLeads();
+  loadLeadsFromCloud();
   renderFeaturesEdit();
-  updateLeadsBadge();
   loadAdminFields();
+  loadApiFields();
 }
 function closeAdminPanel() {
   document.getElementById('admin-panel').classList.remove('open');
@@ -1283,7 +1348,8 @@ function showAdminPage(id) {
     leads: 'Новые заявки',
     'edit-text': 'Редактировать тексты сайта',
     'edit-prices': 'Цены и описания тарифов',
-    'edit-features': 'Карточки возможностей'
+    'edit-features': 'Карточки возможностей',
+    'edit-api': 'Настройка API'
   };
   document.getElementById('admin-page-title').textContent = titles[id] || '';
 }
@@ -1323,21 +1389,21 @@ function renderLeads() {
 
 function deleteLead(id) {
   leads = leads.filter(l => l.id !== id);
-  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  saveLeadsToCloud();
   renderLeads();
   updateLeadsBadge();
 }
 function clearAllLeads() {
   if (!confirm('Удалить все заявки?')) return;
   leads = [];
-  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  saveLeadsToCloud();
   renderLeads();
   updateLeadsBadge();
   showToast('🗑 Заявки очищены');
 }
 function markLeadsRead() {
   leads = leads.map(l => ({...l, isNew: false}));
-  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  saveLeadsToCloud();
   updateLeadsBadge();
 }
 function updateLeadsBadge() {
@@ -1553,12 +1619,37 @@ function closeWelcomeConsent() {
   }, 350);
 }
 
+
+// ─── API SETTINGS ───
+function saveApiSettings() {
+  const key = document.getElementById('e-jsonbin-key').value.trim();
+  const bin = document.getElementById('e-jsonbin-bin').value.trim();
+  if (!key || !bin) { showToast('⚠️ Заполните оба поля'); return; }
+  localStorage.setItem('osmos_jsonbin_key', key);
+  localStorage.setItem('osmos_jsonbin_bin', bin);
+  // Apply immediately
+  const script = document.querySelector('script');
+  flashOk('sok-api');
+  showToast('✓ Настройки сохранены. Перезагрузите страницу.');
+  setTimeout(() => location.reload(), 1500);
+}
+
+function loadApiFields() {
+  const k = localStorage.getItem('osmos_jsonbin_key');
+  const b = localStorage.getItem('osmos_jsonbin_bin');
+  if (document.getElementById('e-jsonbin-key')) {
+    document.getElementById('e-jsonbin-key').value = k || '';
+    document.getElementById('e-jsonbin-bin').value = b || '';
+  }
+  const status = document.getElementById('api-status');
+  if (status) status.textContent = (k && b) ? '✅ Подключено' : '⚠️ Не настроено — заявки сохраняются только локально';
+}
+
 // ─── INIT ───
 window.addEventListener('load', () => {
   applyTexts();
   renderFeaturesGrid();
-  renderLeads();
-  updateLeadsBadge();
+  loadLeadsFromCloud();
   initWelcomeConsent();
 });
 
