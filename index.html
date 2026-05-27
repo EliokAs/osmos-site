@@ -916,12 +916,12 @@ footer{
         <input type="text" id="f-contact" placeholder="">
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:14px;background:var(--paper);border-radius:12px;border:1.5px solid rgba(10,124,110,0.10)" id="consent-wrap">
-        <input type="checkbox" id="f-consent" style="width:18px;height:18px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;cursor:pointer">
+        <input type="checkbox" id="f-consent" onchange="toggleSubmitBtn()" style="width:18px;height:18px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;cursor:pointer">
         <label for="f-consent" style="font-size:0.78rem;color:var(--text2);line-height:1.55;cursor:pointer;font-weight:400">
-          Я согласен(а) с <a href="privacy.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">политикой обработки персональных данных</a> и принимаю условия <a href="offer.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">договора оферты</a>
+          Я согласен(а) с <a href="https://osmos-site-kappa.vercel.app/privacy.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">политикой обработки персональных данных</a> и принимаю условия <a href="https://osmos-site-kappa.vercel.app/offer.pdf" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">договора оферты</a>
         </label>
       </div>
-      <button class="btn-submit" onclick="submitForm()">Отправить заявку →</button>
+      <button class="btn-submit" id="btn-submit-main" onclick="submitForm()" disabled style="opacity:0.45;cursor:not-allowed">Отправить заявку →</button>
     </div>
     <div class="success-msg" id="success-msg">
       <span class="success-icon">🎉</span>
@@ -1187,13 +1187,16 @@ async function loadLeadsFromCloud() {
 
 async function saveLeadsToCloud() {
   localStorage.setItem('osmos_leads', JSON.stringify(leads));
-  if (!cloudReady) return;
+  const key = JSONBIN_KEY;
+  const bin = JSONBIN_BIN;
+  if (!key || !bin) return;
   try {
-    await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN, {
+    const res = await fetch('https://api.jsonbin.io/v3/b/' + bin, {
       method: 'PUT',
-      headers: {'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY},
+      headers: {'Content-Type': 'application/json', 'X-Master-Key': key},
       body: JSON.stringify({leads})
     });
+    if (res.ok) cloudReady = true;
   } catch(e) { console.warn('Cloud save error:', e); }
 }
 
@@ -1236,6 +1239,8 @@ function openModal(plan) {
   document.getElementById('f-method').value = '';
   document.getElementById('f-contact').value = '';
   document.getElementById('f-consent').checked = false;
+  const btn = document.getElementById('btn-submit-main');
+  btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed';
   // pre-select subject if plan is a subject name
   const subjectSel = document.getElementById('f-subject');
   if (plan === 'биология') subjectSel.value = 'Биология ЕГЭ';
@@ -1258,6 +1263,14 @@ document.getElementById('f-method').addEventListener('change', function() {
   else if (v === 'ВКонтакте') { lbl.textContent = 'Ссылка ВКонтакте'; inp.placeholder = 'vk.com/id...'; }
   else { lbl.textContent = 'Контакт'; inp.placeholder = ''; }
 });
+
+function toggleSubmitBtn() {
+  const checked = document.getElementById('f-consent').checked;
+  const btn = document.getElementById('btn-submit-main');
+  btn.disabled = !checked;
+  btn.style.opacity = checked ? '1' : '0.45';
+  btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+}
 
 function submitForm() {
   const name = document.getElementById('f-name').value.trim();
@@ -1353,6 +1366,9 @@ function tryAdminLogin() {
 function openAdminPanel() {
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
+  // Рендерим текущие leads сразу (они уже актуальны), затем обновляем из облака
+  renderLeads();
+  updateLeadsBadge();
   loadLeadsFromCloud();
   renderFeaturesEdit();
   loadAdminFields();
