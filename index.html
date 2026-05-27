@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Осмос — Платформа репетитора</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d1117;
+  --paper: #f7f3ee;
+  --cream: #ede8e0;
+  --teal: #0a7c6e;
+  --teal-light: #12a898;
+  --teal-pale: #d0ece9;
+  --teal-xpale: #ebf7f5;
+  --gold: #c8913a;
+  --gold-light: #e8b460;
+  --text: #1a1f2e;
+  --text2: #4a5568;
+  --text3: #8a93a6;
+  --white: #ffffff;
+  --shadow: 0 4px 32px rgba(10,124,110,0.10);
+  --shadow2: 0 16px 64px rgba(10,124,110,0.16);
+  --r: 18px;
+  --r2: 28px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Geologica',sans-serif;background:var(--paper);color:var(--text);overflow-x:hidden}
+
+/* ─── NOISE TEXTURE ─── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.5;
+}
+
+/* ─── NAV ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:999;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 5%;
+  background:rgba(247,243,238,0.88);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(10,124,110,0.08);
+  transition:box-shadow 0.3s;
+}
+nav.scrolled{box-shadow:var(--shadow)}
+.nav-logo{
+  font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;
+  color:var(--teal);letter-spacing:-0.02em;
+  display:flex;align-items:center;gap:8px;
+}
+.nav-logo .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--gold);display:inline-block;margin-bottom:4px;
+}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{
+  text-decoration:none;color:var(--text2);font-size:0.88rem;font-weight:500;
+  letter-spacing:0.02em;transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--teal)}
+.nav-cta{
+  background:var(--teal);color:#fff;border:none;border-radius:50px;
+  padding:10px 24px;font-family:'Geologica',sans-serif;font-size:0.88rem;
+  font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;
+}
+.nav-cta:hover{background:var(--teal-light);transform:translateY(-1px);box-shadow:0 4px 20px rgba(10,124,110,0.3)}
+
+/* ─── HERO ─── */
+#hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;padding:120px 5% 80px;
+}
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 60% 40%, rgba(10,124,110,0.07) 0%, transparent 70%),
+             radial-gradient(ellipse 50% 50% at 15% 80%, rgba(200,145,58,0.06) 0%, transparent 60%);
+}
+.hero-circles{position:absolute;inset:0;z-index:0;overflow:hidden}
+.hero-circle{
+  position:absolute;border-radius:50%;border:1px solid rgba(10,124,110,0.08);
+  animation:spin 40s linear infinite;
+}
+.hero-circle:nth-child(1){width:600px;height:600px;right:-150px;top:-100px;animation-duration:50s}
+.hero-circle:nth-child(2){width:400px;height:400px;right:-50px;top:50px;animation-duration:35s;animation-direction:reverse}
+.hero-circle:nth-child(3){width:200px;height:200px;right:80px;top:170px;animation-duration:25s;border-color:rgba(200,145,58,0.12)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+.hero-content{position:relative;z-index:1;max-width:660px}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--teal-xpale);border:1px solid var(--teal-pale);
+  border-radius:50px;padding:6px 16px;
+  font-size:0.78rem;font-weight:600;color:var(--teal);
+  letter-spacing:0.06em;text-transform:uppercase;margin-bottom:28px;
+  animation:fadeUp 0.8s ease both;
+}
+.hero-badge .pulse{
+  width:6px;height:6px;border-radius:50%;background:var(--teal);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+
+.hero-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3.2rem,7vw,5.5rem);font-weight:300;line-height:1.05;
+  letter-spacing:-0.03em;margin-bottom:24px;
+  animation:fadeUp 0.8s 0.1s ease both;
+}
+.hero-title em{font-style:italic;color:var(--teal)}
+.hero-title strong{font-weight:700}
+.hero-sub{
+  font-size:1.05rem;color:var(--text2);line-height:1.7;margin-bottom:40px;font-weight:300;
+  animation:fadeUp 0.8s 0.2s ease both;
+}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp 0.8s 0.3s ease both}
+.btn-primary{
+  background:var(--teal);color:#fff;border:none;border-radius:50px;
+  padding:16px 36px;font-family:'Geologica',sans-serif;font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all 0.25s;box-shadow:0 4px 24px rgba(10,124,110,0.28);
+  letter-spacing:0.01em;
+}
+.btn-primary:hover{background:var(--teal-light);transform:translateY(-2px);box-shadow:0 8px 36px rgba(10,124,110,0.36)}
+.btn-outline{
+  background:transparent;color:var(--teal);border:1.5px solid var(--teal);
+  border-radius:50px;padding:15px 32px;font-family:'Geologica',sans-serif;
+  font-size:1rem;font-weight:500;cursor:pointer;transition:all 0.25s;
+}
+.btn-outline:hover{background:var(--teal-xpale)}
+
+.hero-stats{
+  display:flex;gap:40px;margin-top:56px;padding-top:40px;
+  border-top:1px solid rgba(10,124,110,0.12);
+  animation:fadeUp 0.8s 0.4s ease both;
+}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:700;color:var(--teal);line-height:1}
+.stat-label{font-size:0.8rem;color:var(--text3);margin-top:4px;font-weight:400;letter-spacing:0.02em}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SECTION BASE ─── */
+section{padding:100px 5%;position:relative;z-index:1}
+.section-label{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:16px;
+}
+.section-label::before{content:'';width:24px;height:1.5px;background:var(--teal)}
+.section-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(2rem,4vw,3.2rem);font-weight:600;line-height:1.12;
+  letter-spacing:-0.02em;margin-bottom:14px;
+}
+.section-sub{font-size:1rem;color:var(--text2);line-height:1.7;font-weight:300;max-width:560px}
+
+/* ─── FEATURES ─── */
+#features{background:var(--cream)}
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px;
+  margin-top:60px;border-radius:var(--r2);overflow:hidden;
+  border:1px solid rgba(10,124,110,0.10);
+}
+.feature-card{
+  background:var(--white);padding:36px 32px;
+  transition:background 0.3s;cursor:default;
+}
+.feature-card:hover{background:var(--teal-xpale)}
+.feature-icon{
+  font-size:2rem;margin-bottom:18px;display:block;
+  filter:drop-shadow(0 2px 8px rgba(10,124,110,0.2));
+}
+.feature-title{font-size:1.05rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+.feature-desc{font-size:0.88rem;color:var(--text2);line-height:1.65;font-weight:300}
+
+/* ─── PRICING ─── */
+#pricing{background:var(--paper)}
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:24px;margin-top:60px;
+}
+.price-card{
+  background:var(--white);border-radius:var(--r2);padding:40px 36px;
+  border:1.5px solid rgba(10,124,110,0.10);
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.price-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--teal),var(--teal-light));
+  transform:scaleX(0);transform-origin:left;transition:transform 0.4s;
+}
+.price-card:hover::before{transform:scaleX(1)}
+.price-card:hover{box-shadow:var(--shadow2);transform:translateY(-4px)}
+.price-card.featured{
+  background:linear-gradient(145deg,var(--teal) 0%,var(--teal-light) 100%);
+  border-color:transparent;color:#fff;
+}
+.price-card.featured::before{display:none}
+.price-card.featured .price-desc,.price-card.featured .price-type,
+.price-card.featured .plus-item{color:rgba(255,255,255,0.75)}
+.price-card.featured .plus-item::before{color:rgba(255,255,255,0.6)}
+.price-tag{
+  display:inline-block;background:var(--teal-xpale);color:var(--teal);
+  font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:50px;margin-bottom:16px;
+}
+.featured .price-tag{background:rgba(255,255,255,0.2);color:#fff}
+.price-type{font-size:0.82rem;color:var(--text3);font-weight:400;margin-bottom:8px;letter-spacing:0.02em}
+.price-name{
+  font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;
+  margin-bottom:4px;line-height:1;
+}
+.price-amount{
+  display:flex;align-items:baseline;gap:4px;margin:20px 0;
+}
+.price-num{
+  font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:700;
+  line-height:1;color:var(--teal);
+}
+.featured .price-num{color:#fff}
+.price-per{font-size:0.85rem;color:var(--text2);font-weight:300}
+.featured .price-per{color:rgba(255,255,255,0.7)}
+.price-desc{font-size:0.85rem;color:var(--text2);margin-bottom:24px;line-height:1.6;font-weight:300}
+.plus-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.plus-item{font-size:0.85rem;color:var(--text2);display:flex;align-items:flex-start;gap:10px;font-weight:300}
+.plus-item::before{
+  content:'✓';color:var(--teal);font-weight:700;font-size:0.9rem;
+  flex-shrink:0;margin-top:1px;
+}
+.featured .plus-item::before{color:rgba(255,255,255,0.9)}
+.btn-enroll{
+  width:100%;padding:14px;border-radius:50px;font-family:'Geologica',sans-serif;
+  font-size:0.92rem;font-weight:600;cursor:pointer;transition:all 0.25s;
+  letter-spacing:0.02em;
+}
+.btn-enroll-outline{
+  background:transparent;color:var(--teal);border:1.5px solid var(--teal);
+}
+.btn-enroll-outline:hover{background:var(--teal-xpale)}
+.btn-enroll-white{
+  background:#fff;color:var(--teal);border:none;
+  box-shadow:0 4px 16px rgba(0,0,0,0.12);
+}
+.btn-enroll-white:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,0.18)}
+
+/* ─── PROCESS ─── */
+#process{background:var(--cream)}
+.process-steps{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:0;margin-top:60px;position:relative;
+}
+.process-steps::before{
+  content:'';position:absolute;top:32px;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal-pale),var(--teal-pale),transparent);
+}
+.step{
+  text-align:center;padding:24px 16px;position:relative;z-index:1;
+}
+.step-num{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--white);border:2px solid var(--teal-pale);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
+  font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--teal);
+  box-shadow:0 4px 16px rgba(10,124,110,0.10);
+  transition:all 0.3s;
+}
+.step:hover .step-num{background:var(--teal);color:#fff;border-color:var(--teal);transform:scale(1.1)}
+.step-title{font-size:1rem;font-weight:600;margin-bottom:8px}
+.step-desc{font-size:0.83rem;color:var(--text2);line-height:1.6;font-weight:300}
+
+/* ─── CONTACT / CTA ─── */
+#contact{
+  background:linear-gradient(135deg,var(--teal) 0%,var(--teal-light) 100%);
+  text-align:center;color:#fff;
+}
+#contact .section-label{color:rgba(255,255,255,0.7)}
+#contact .section-label::before{background:rgba(255,255,255,0.5)}
+#contact .section-title{color:#fff}
+#contact .section-sub{color:rgba(255,255,255,0.8);margin:0 auto 40px}
+
+/* ─── MODAL ─── */
+.modal-bg{
+  position:fixed;inset:0;z-index:2000;background:rgba(13,17,23,0.6);
+  backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:var(--white);border-radius:var(--r2);padding:48px 44px;
+  max-width:480px;width:100%;position:relative;
+  box-shadow:0 32px 80px rgba(0,0,0,0.18);
+  animation:modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{
+  position:absolute;top:16px;right:20px;background:none;border:none;
+  font-size:1.3rem;cursor:pointer;color:var(--text3);transition:color 0.2s;
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+}
+.modal-close:hover{color:var(--text);background:var(--cream)}
+.modal-tag{
+  display:inline-block;background:var(--teal-xpale);color:var(--teal);
+  font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:50px;margin-bottom:16px;
+}
+.modal-title{
+  font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;
+  letter-spacing:-0.02em;margin-bottom:8px;
+}
+.modal-sub{font-size:0.88rem;color:var(--text2);margin-bottom:28px;font-weight:300}
+.form-field{margin-bottom:16px}
+.form-field label{display:block;font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:0.04em;text-transform:uppercase}
+.form-field input,.form-field select{
+  width:100%;padding:13px 16px;border-radius:12px;
+  border:1.5px solid rgba(10,124,110,0.15);
+  background:var(--paper);font-family:'Geologica',sans-serif;font-size:0.92rem;
+  color:var(--text);outline:none;transition:border 0.2s;
+}
+.form-field input:focus,.form-field select:focus{border-color:var(--teal)}
+.form-plan-info{
+  background:var(--teal-xpale);border-radius:12px;padding:12px 16px;
+  font-size:0.83rem;color:var(--teal);font-weight:500;margin-bottom:20px;
+  display:none;
+}
+.form-plan-info.show{display:block}
+.btn-submit{
+  width:100%;padding:15px;border-radius:50px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-light));color:#fff;
+  border:none;font-family:'Geologica',sans-serif;font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all 0.25s;box-shadow:0 4px 24px rgba(10,124,110,0.3);
+  letter-spacing:0.02em;
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(10,124,110,0.4)}
+.success-msg{
+  text-align:center;padding:20px 0;display:none;
+}
+.success-icon{font-size:3rem;display:block;margin-bottom:16px;animation:bounce 0.6s ease}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.success-text{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;margin-bottom:8px}
+.success-sub{font-size:0.9rem;color:var(--text2);font-weight:300}
+
+/* ─── ADMIN PANEL ─── */
+#admin-login{
+  position:fixed;inset:0;z-index:3000;background:var(--ink);
+  display:none;align-items:center;justify-content:center;
+}
+#admin-login.open{display:flex}
+.admin-login-box{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px;padding:48px 44px;width:360px;text-align:center;
+}
+.admin-login-logo{
+  font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#fff;
+  margin-bottom:4px;
+}
+.admin-login-sub{font-size:0.78rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px}
+.admin-login-box input{
+  width:100%;padding:13px 16px;border-radius:12px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+  color:#fff;font-family:'Geologica',sans-serif;font-size:0.92rem;
+  margin-bottom:12px;outline:none;transition:border 0.2s;
+}
+.admin-login-box input:focus{border-color:var(--teal-light)}
+.admin-login-box input::placeholder{color:rgba(255,255,255,0.3)}
+.btn-admin-login{
+  width:100%;padding:13px;border-radius:50px;
+  background:var(--teal);color:#fff;border:none;
+  font-family:'Geologica',sans-serif;font-size:0.92rem;font-weight:600;cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-admin-login:hover{background:var(--teal-light)}
+.admin-err{color:#ff6b6b;font-size:0.82rem;margin-top:8px;min-height:18px}
+
+#admin-panel{
+  position:fixed;inset:0;z-index:2500;
+  background:var(--paper);display:none;overflow:hidden;
+  flex-direction:row;
+}
+#admin-panel.open{display:flex}
+.admin-sidebar{
+  width:260px;flex-shrink:0;background:var(--ink);color:#fff;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.admin-sidebar-logo{
+  padding:28px 24px 22px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.admin-sidebar-logo .logo-name{
+  font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:#fff;
+}
+.admin-sidebar-logo .logo-role{
+  font-size:0.68rem;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;
+}
+.admin-nav{flex:1;padding:16px 0;overflow-y:auto}
+.admin-nav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 24px;
+  color:rgba(255,255,255,0.55);font-size:0.88rem;font-weight:400;
+  cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;
+}
+.admin-nav-item:hover{color:#fff;background:rgba(255,255,255,0.04)}
+.admin-nav-item.active{color:#fff;background:rgba(10,124,110,0.2);border-left-color:var(--teal-light)}
+.admin-nav-item .nav-icon{font-size:1.1rem;width:22px;text-align:center;flex-shrink:0}
+.admin-badge{
+  margin-left:auto;background:var(--gold);color:#fff;border-radius:50px;
+  font-size:0.68rem;font-weight:700;padding:2px 8px;min-width:20px;text-align:center;
+}
+.admin-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.admin-topbar{
+  height:64px;flex-shrink:0;background:var(--white);border-bottom:1px solid rgba(10,124,110,0.08);
+  display:flex;align-items:center;padding:0 32px;gap:16px;
+}
+.admin-topbar-title{font-size:1.05rem;font-weight:600;color:var(--text);flex:1}
+.btn-admin-close{
+  background:rgba(10,124,110,0.08);color:var(--teal);border:none;border-radius:50px;
+  padding:8px 18px;font-family:'Geologica',sans-serif;font-size:0.82rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;
+}
+.btn-admin-close:hover{background:var(--teal);color:#fff}
+.admin-content{flex:1;overflow-y:auto;padding:32px}
+.admin-page{display:none}
+.admin-page.active{display:block}
+
+/* Admin cards */
+.admin-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.admin-stat{
+  background:var(--white);border-radius:var(--r);padding:24px;
+  border:1px solid rgba(10,124,110,0.08);
+}
+.admin-stat-num{
+  font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:700;
+  color:var(--teal);line-height:1;
+}
+.admin-stat-label{font-size:0.8rem;color:var(--text3);margin-top:6px}
+
+/* Leads table */
+.leads-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+}
+.leads-title{font-size:1rem;font-weight:600}
+.btn-clear-leads{
+  background:none;border:1px solid rgba(200,145,58,0.3);color:var(--gold);
+  border-radius:50px;padding:6px 14px;font-size:0.78rem;font-weight:600;cursor:pointer;
+  font-family:'Geologica',sans-serif;transition:all 0.2s;
+}
+.btn-clear-leads:hover{background:rgba(200,145,58,0.08)}
+.leads-table-wrap{
+  background:var(--white);border-radius:var(--r);overflow:hidden;
+  border:1px solid rgba(10,124,110,0.08);
+}
+.leads-table{width:100%;border-collapse:collapse}
+.leads-table th{
+  background:var(--cream);padding:12px 16px;text-align:left;
+  font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--text3);border-bottom:1px solid rgba(10,124,110,0.08);
+}
+.leads-table td{
+  padding:14px 16px;border-bottom:1px solid rgba(10,124,110,0.05);
+  font-size:0.87rem;color:var(--text);
+}
+.leads-table tr:last-child td{border-bottom:none}
+.leads-table tr:hover td{background:var(--teal-xpale)}
+.lead-new{
+  display:inline-block;background:rgba(200,145,58,0.12);color:var(--gold);
+  border-radius:50px;font-size:0.68rem;font-weight:700;padding:2px 10px;
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+.lead-plan{
+  display:inline-block;background:var(--teal-xpale);color:var(--teal);
+  border-radius:50px;font-size:0.72rem;font-weight:600;padding:3px 10px;
+}
+.contact-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:0.82rem;font-weight:500;
+}
+.empty-leads{
+  text-align:center;padding:60px 20px;color:var(--text3);
+}
+.empty-leads .empty-icon{font-size:2.5rem;margin-bottom:12px}
+.empty-leads p{font-size:0.9rem}
+
+/* Edit fields */
+.edit-section{
+  background:var(--white);border-radius:var(--r);padding:28px;
+  border:1px solid rgba(10,124,110,0.08);margin-bottom:20px;
+}
+.edit-section-title{
+  font-size:0.95rem;font-weight:600;margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;
+}
+.edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.edit-field label{display:block;font-size:0.75rem;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:0.04em;text-transform:uppercase}
+.edit-field input,.edit-field textarea{
+  width:100%;padding:10px 14px;border-radius:10px;
+  border:1.5px solid rgba(10,124,110,0.12);
+  background:var(--paper);font-family:'Geologica',sans-serif;font-size:0.88rem;
+  color:var(--text);outline:none;transition:border 0.2s;
+}
+.edit-field input:focus,.edit-field textarea:focus{border-color:var(--teal)}
+.edit-field textarea{resize:vertical;min-height:80px}
+.btn-save{
+  background:var(--teal);color:#fff;border:none;border-radius:50px;
+  padding:10px 24px;font-family:'Geologica',sans-serif;font-size:0.88rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;margin-top:16px;
+}
+.btn-save:hover{background:var(--teal-light)}
+.save-ok{color:var(--teal);font-size:0.82rem;margin-left:12px;opacity:0;transition:opacity 0.3s;display:inline}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:32px;right:32px;z-index:9999;
+  background:var(--ink);color:#fff;border-radius:12px;
+  padding:14px 20px;font-size:0.88rem;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  transform:translateY(80px);opacity:0;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;max-width:320px;display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* Admin open button */
+#admin-open-btn{
+  position:fixed;bottom:24px;right:24px;z-index:1500;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--ink);color:rgba(255,255,255,0.25);border:none;
+  font-size:1.1rem;cursor:pointer;transition:all 0.3s;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+#admin-open-btn:hover{color:rgba(255,255,255,0.6);transform:scale(1.1)}
+
+/* New lead pulse */
+@keyframes newLead{0%{box-shadow:0 0 0 0 rgba(200,145,58,0.5)}70%{box-shadow:0 0 0 12px rgba(200,145,58,0)}100%{box-shadow:0 0 0 0 rgba(200,145,58,0)}}
+.admin-badge.pulse-badge{animation:newLead 1.5s infinite}
+
+/* Footer */
+footer{
+  background:var(--ink);color:rgba(255,255,255,0.4);
+  padding:40px 5%;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;font-size:0.82rem;
+}
+.footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:rgba(255,255,255,0.7)}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .hero-stats{gap:24px;flex-wrap:wrap}
+  .process-steps::before{display:none}
+  .admin-sidebar{width:220px}
+  .admin-content{padding:20px}
+  .modal{padding:32px 24px}
+  section{padding:70px 5%}
+}
+
+/* ─── WELCOME CONSENT MODAL ─── */
+#welcome-consent-bg{
+  position:fixed;inset:0;z-index:5000;
+  background:rgba(13,17,23,0.72);backdrop-filter:blur(12px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+#welcome-consent-box{
+  background:var(--white);border-radius:28px;padding:48px 44px;
+  max-width:500px;width:100%;position:relative;
+  box-shadow:0 40px 100px rgba(0,0,0,0.25);
+  animation:modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  text-align:center;
+}
+.wc-logo{
+  font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:700;
+  color:var(--teal);letter-spacing:-0.02em;margin-bottom:6px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.wc-logo .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;margin-bottom:4px}
+.wc-headline{
+  font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;
+  color:var(--text);margin:16px 0 8px;letter-spacing:-0.01em;line-height:1.2;
+}
+.wc-sub{font-size:0.88rem;color:var(--text2);line-height:1.6;font-weight:300;margin-bottom:28px}
+.wc-check-wrap{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--teal-xpale);border:1.5px solid var(--teal-pale);
+  border-radius:14px;padding:16px 18px;margin-bottom:24px;text-align:left;
+  cursor:pointer;transition:border-color 0.2s;
+}
+.wc-check-wrap:has(#wc-checkbox:checked){border-color:var(--teal)}
+.wc-check-wrap input[type=checkbox]{
+  width:20px;height:20px;accent-color:var(--teal);flex-shrink:0;
+  margin-top:1px;cursor:pointer;
+}
+.wc-check-label{font-size:0.82rem;color:var(--text);line-height:1.6;cursor:pointer}
+.wc-check-label a{color:var(--teal);text-decoration:underline;text-underline-offset:2px;font-weight:500}
+.btn-wc-accept{
+  width:100%;padding:15px;border-radius:50px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-light));color:#fff;
+  border:none;font-family:'Geologica',sans-serif;font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 24px rgba(10,124,110,0.3);letter-spacing:0.01em;
+  opacity:0.45;pointer-events:none;
+}
+.btn-wc-accept.active{opacity:1;pointer-events:auto}
+.btn-wc-accept.active:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(10,124,110,0.42)}
+
+/* Hide old admin button */
+#admin-open-btn{ display:none !important }
+</style>
+</head>
+<body>
+
+<!-- ─── WELCOME CONSENT MODAL ─── -->
+<div id="welcome-consent-bg">
+  <div id="welcome-consent-box">
+    <div class="wc-logo"><div class="dot"></div>Осмос</div>
+    <div class="wc-headline">Добро пожаловать!</div>
+    <p class="wc-sub">Прежде чем начать, пожалуйста, ознакомьтесь с нашими документами и подтвердите своё согласие.</p>
+    <label class="wc-check-wrap">
+      <input type="checkbox" id="wc-checkbox" onchange="toggleWcBtn(this)">
+      <span class="wc-check-label">
+        Я даю согласие на обработку <a href="privacy.html" target="_blank" onclick="event.stopPropagation()">персональных данных</a> и принимаю условия <a href="offer.html" target="_blank" onclick="event.stopPropagation()">договора оферты</a>
+      </span>
+    </label>
+    <button class="btn-wc-accept" id="btn-wc-accept" onclick="acceptWelcomeConsent()">Принять и продолжить</button>
+
+  </div>
+</div>
+
+<!-- ─── GEAR BUTTON (fixed bottom center) ─── -->
+<!-- ─── NAV ─── -->
+<nav id="main-nav">
+  <div class="nav-logo">
+    <div class="dot"></div>
+    Осмос
+  </div>
+  <div class="nav-links">
+    <a href="#features">Возможности</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="#process">Как работаем</a>
+  </div>
+  <button class="nav-cta" onclick="openModal('индивидуальное занятие')">Записаться</button>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-circles">
+    <div class="hero-circle"></div>
+    <div class="hero-circle"></div>
+    <div class="hero-circle"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="pulse"></span><span id="hero-badge-text">Репетитор онлайн</span></div>
+    <h1 class="hero-title" id="hero-title">
+      Знания,<br>
+      которые <em>проникают</em><br>
+      <strong>вглубь</strong>
+    </h1>
+    <p class="hero-sub" id="hero-sub">Индивидуальный подход, живые объяснения и реальный результат. Готовимся к ЕГЭ, ОГЭ и олимпиадам вместе.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="openModal('индивидуальное занятие')">Записаться на пробное</button>
+      <button class="btn-outline" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Узнать цены</button>
+    </div>
+    <div style="margin-top:20px;display:inline-flex;align-items:center;gap:10px;background:rgba(200,145,58,0.10);border:1px solid rgba(200,145,58,0.25);border-radius:50px;padding:9px 20px;animation:fadeUp 0.8s 0.45s ease both">
+      <span style="font-size:1.1rem">🎁</span>
+      <span style="font-size:0.88rem;font-weight:600;color:var(--gold)">Пробное занятие 30–40 минут — бесплатно</span>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num" id="stat1">95%</div>
+        <div class="stat-label">сдают ЕГЭ на 80+</div>
+      </div>
+      <div>
+        <div class="stat-num" id="stat2">3 года</div>
+        <div class="stat-label">опыта преподавания</div>
+      </div>
+      <div>
+        <div class="stat-num" id="stat3">120+</div>
+        <div class="stat-label">выпускников</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SUBJECTS ─── -->
+<section id="subjects" style="padding:60px 5% 70px;background:var(--ink)">
+  <div style="text-align:center;margin-bottom:44px">
+    <div class="section-label" style="color:rgba(18,168,152,0.8);justify-content:center">
+      <span style="background:rgba(18,168,152,0.15);padding:4px 14px;border-radius:50px;border:1px solid rgba(18,168,152,0.2)">Предметы</span>
+    </div>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:600;color:#fff;margin-top:12px;letter-spacing:-0.02em">Биология и химия — моя специализация</h2>
+    <p style="color:rgba(255,255,255,0.45);font-size:0.95rem;margin-top:10px;font-weight:300">Готовлю к ОГЭ и ЕГЭ. Глубокое знание предмета и понятные объяснения.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:900px;margin:0 auto">
+
+    <div class="subj-card" style="background:rgba(255,255,255,0.04);border:1px solid rgba(18,168,152,0.18);border-radius:24px;padding:36px 32px;transition:all 0.3s;cursor:default" onmouseover="this.style.background='rgba(18,168,152,0.10)';this.style.borderColor='rgba(18,168,152,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(18,168,152,0.18)'">
+      <div style="font-size:2.6rem;margin-bottom:16px">🧬</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:#fff;margin-bottom:6px">Биология</div>
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+        <span style="background:rgba(10,124,110,0.3);color:var(--teal-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">ОГЭ</span>
+        <span style="background:rgba(10,124,110,0.3);color:var(--teal-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">ЕГЭ</span>
+        <span style="background:rgba(200,145,58,0.2);color:var(--gold-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">Олимпиады</span>
+      </div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--teal-light);font-weight:700">✓</span> Клетка, ткани, организмы</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--teal-light);font-weight:700">✓</span> Генетика и эволюция</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--teal-light);font-weight:700">✓</span> Экология и анатомия человека</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--teal-light);font-weight:700">✓</span> Разбор заданий 2-й части ЕГЭ</li>
+      </ul>
+      <button onclick="openModal('биология')" style="margin-top:24px;width:100%;padding:12px;border-radius:50px;background:var(--teal);color:#fff;border:none;font-family:'Geologica',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='var(--teal-light)'" onmouseout="this.style.background='var(--teal)'">Записаться на биологию →</button>
+    </div>
+
+    <div class="subj-card" style="background:rgba(255,255,255,0.04);border:1px solid rgba(200,145,58,0.18);border-radius:24px;padding:36px 32px;transition:all 0.3s;cursor:default" onmouseover="this.style.background='rgba(200,145,58,0.08)';this.style.borderColor='rgba(200,145,58,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(200,145,58,0.18)'">
+      <div style="font-size:2.6rem;margin-bottom:16px">⚗️</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:#fff;margin-bottom:6px">Химия</div>
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+        <span style="background:rgba(10,124,110,0.3);color:var(--teal-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">ОГЭ</span>
+        <span style="background:rgba(10,124,110,0.3);color:var(--teal-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">ЕГЭ</span>
+        <span style="background:rgba(200,145,58,0.2);color:var(--gold-light);border-radius:50px;font-size:0.72rem;font-weight:700;padding:4px 12px;letter-spacing:0.05em">Олимпиады</span>
+      </div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--gold-light);font-weight:700">✓</span> Строение вещества и реакции</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--gold-light);font-weight:700">✓</span> Органическая и неорганическая химия</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--gold-light);font-weight:700">✓</span> Задачи на расчёты и уравнения</li>
+        <li style="font-size:0.85rem;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px"><span style="color:var(--gold-light);font-weight:700">✓</span> Решение задач 2-й части ЕГЭ</li>
+      </ul>
+      <button onclick="openModal('химия')" style="margin-top:24px;width:100%;padding:12px;border-radius:50px;background:var(--gold);color:#fff;border:none;font-family:'Geologica',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='var(--gold-light)'" onmouseout="this.style.background='var(--gold)'">Записаться на химию →</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section id="features">
+  <div class="section-label">Для учеников</div>
+  <h2 class="section-title" id="features-title">Всё для успешного обучения</h2>
+  <p class="section-sub" id="features-sub">Современный формат занятий с опорой на результат. Каждый ученик получает персональный трек развития.</p>
+  <div class="features-grid" id="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">🧬</span>
+      <div class="feature-title">Личный кабинет ученика</div>
+      <div class="feature-desc">Все материалы, домашние задания и прогресс в одном месте. Удобный доступ с любого устройства.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📝</span>
+      <div class="feature-title">Интерактивные тесты</div>
+      <div class="feature-desc">Тренировочные задания в формате ЕГЭ/ОГЭ с моментальной проверкой и разбором ошибок.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📊</span>
+      <div class="feature-title">Отслеживание прогресса</div>
+      <div class="feature-desc">Наглядная статистика по темам и динамика роста баллов. Видите, как растёт уровень знаний.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🗓</span>
+      <div class="feature-title">Расписание и уведомления</div>
+      <div class="feature-desc">Удобное бронирование занятий, напоминания о домашних заданиях и предстоящих уроках.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💬</span>
+      <div class="feature-title">Прямая связь с педагогом</div>
+      <div class="feature-desc">Задавайте вопросы между занятиями. Быстрые ответы и поддержка при подготовке к экзаменам.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🏆</span>
+      <div class="feature-title">Пробные экзамены</div>
+      <div class="feature-desc">Полноценные пробники в условиях, максимально приближенных к реальному ЕГЭ и ОГЭ.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PRICING ─── -->
+<section id="pricing">
+  <div class="section-label">Тарифы</div>
+  <h2 class="section-title">Выберите <em style="font-family:'Cormorant Garamond',serif;font-style:italic">удобный формат</em></h2>
+  <p class="section-sub">Гибкие условия для любого запроса — от разовых занятий до системной подготовки в группе.</p>
+  <div class="pricing-grid" id="pricing-grid">
+
+    <div class="price-card">
+      <div class="price-tag">Индивидуально</div>
+      <div class="price-type" id="p1-type">1 ученик · 1 час</div>
+      <div class="price-name" id="p1-name">Личный формат</div>
+      <div class="price-amount">
+        <div class="price-num" id="p1-price">2000</div>
+        <div class="price-per">₽ / час</div>
+      </div>
+      <div class="price-desc" id="p1-desc">Максимальное внимание каждой теме. Темп и программа подстраиваются под вас.</div>
+      <ul class="plus-list" id="p1-pluslist">
+        <li class="plus-item">Программа полностью под вашу цель</li>
+        <li class="plus-item">Моментальная обратная связь</li>
+        <li class="plus-item">Гибкое расписание в удобное время</li>
+        <li class="plus-item">Разбор ошибок в режиме реального времени</li>
+        <li class="plus-item">Домашние задания по слабым темам</li>
+      </ul>
+      <button class="btn-enroll btn-enroll-outline" onclick="openModal('индивидуальное занятие')">Записаться</button>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-tag">Популярное</div>
+      <div class="price-type" id="p2-type">2 ученика · 80 минут</div>
+      <div class="price-name" id="p2-name">Парные занятия</div>
+      <div class="price-amount">
+        <div class="price-num" id="p2-price">1400</div>
+        <div class="price-per" style="color:rgba(255,255,255,0.6)">₽ / чел · 80 мин</div>
+      </div>
+      <div class="price-desc" id="p2-desc">Учитесь вместе с другом или одноклассником — экономнее, но с тем же качеством.</div>
+      <ul class="plus-list" id="p2-pluslist">
+        <li class="plus-item">Экономия по сравнению с индивидуальным</li>
+        <li class="plus-item">Соревновательный дух мотивирует</li>
+        <li class="plus-item">80 минут — глубокое погружение в тему</li>
+        <li class="plus-item">Совместный разбор задач</li>
+        <li class="plus-item">Общее расписание и гибкость</li>
+      </ul>
+      <button class="btn-enroll btn-enroll-white" onclick="openModal('парное занятие')">Записаться</button>
+    </div>
+
+    <div class="price-card">
+      <div class="price-tag">Экономично</div>
+      <div class="price-type" id="p3-type">До 7 человек · 8 занятий</div>
+      <div class="price-name" id="p3-name">Группа</div>
+      <div class="price-amount">
+        <div class="price-num" id="p3-price">6000</div>
+        <div class="price-per">₽ / 8 занятий</div>
+      </div>
+      <div class="price-desc" id="p3-desc">До 7 учеников, 8 занятий по 80 минут. Лучшее соотношение цены и результата.</div>
+      <ul class="plus-list" id="p3-pluslist">
+        <li class="plus-item">Самая низкая цена за занятие</li>
+        <li class="plus-item">Атмосфера мини-класса и взаимопомощь</li>
+        <li class="plus-item">Структурированный учебный план</li>
+        <li class="plus-item">80 минут насыщенного урока</li>
+        <li class="plus-item">Фиксированный блок — 8 занятий подряд</li>
+      </ul>
+      <button class="btn-enroll btn-enroll-outline" onclick="openModal('групповое занятие')">Записаться</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── PROCESS ─── -->
+<section id="process">
+  <div class="section-label">Как это работает</div>
+  <h2 class="section-title" id="process-title">Просто и понятно</h2>
+  <p class="section-sub" id="process-sub">Четыре шага от заявки до первого занятия. Без сложностей.</p>
+  <div class="process-steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">Оставьте заявку</div>
+      <div class="step-desc">Заполните короткую форму с именем и удобным способом связи</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">Свяжемся с вами</div>
+      <div class="step-desc">Обсудим цели, текущий уровень и выберем подходящий формат</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">Бесплатное пробное</div>
+      <div class="step-desc">30–40 минут с педагогом онлайн — знакомство и диагностика пробелов. Бесплатно!</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-title">Система занятий</div>
+      <div class="step-desc">Регулярные уроки по персональному плану и контроль прогресса</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CONTACT ─── -->
+<section id="contact">
+  <div class="section-label">Начнём?</div>
+  <h2 class="section-title">Первое занятие — бесплатно</h2>
+  <p class="section-sub" id="contact-sub">30–40 минут онлайн с педагогом: познакомимся, разберём пробелы и составим план. Оставьте заявку — свяжусь в ближайшее время.</p>
+  <button class="btn-primary" style="background:#fff;color:var(--teal);box-shadow:0 4px 24px rgba(0,0,0,0.15)" onclick="openModal('индивидуальное занятие')">Записаться бесплатно →</button>
+</section>
+
+<footer>
+  <div class="footer-logo">Осмос</div>
+  <div id="footer-contacts">Репетитор онлайн · Связь: Telegram / ВКонтакте</div>
+  <button onclick="openAdminLogin()" title="Панель администратора" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:1.2rem;cursor:pointer;padding:4px;transition:color 0.2s;line-height:1;flex-shrink:0" onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.25)'">⚙️</button>
+</footer>
+
+<!-- ─── MODAL FORM ─── -->
+<div class="modal-bg" id="enroll-modal" onclick="if(event.target===this)closeEnrollModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEnrollModal()">✕</button>
+    <div id="modal-form-wrap">
+      <div class="modal-tag" id="modal-plan-tag">Запись</div>
+      <div class="modal-title">Запишитесь на занятие</div>
+      <div class="modal-sub">Укажите имя и удобный способ связи — я напишу вам сам!</div>
+      <div class="form-plan-info" id="form-plan-info"></div>
+      <div class="form-field">
+        <label>Ваше имя</label>
+        <input type="text" id="f-name" placeholder="Как вас зовут?">
+      </div>
+      <div class="form-field">
+        <label>Предмет</label>
+        <select id="f-subject">
+          <option value="">— Выберите предмет —</option>
+          <option value="Биология ОГЭ">🧬 Биология ОГЭ</option>
+          <option value="Биология ЕГЭ">🧬 Биология ЕГЭ</option>
+          <option value="Химия ОГЭ">⚗️ Химия ОГЭ</option>
+          <option value="Химия ЕГЭ">⚗️ Химия ЕГЭ</option>
+          <option value="Биология + Химия">🧬⚗️ Биология + Химия</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Способ связи</label>
+        <select id="f-method">
+          <option value="">— Выберите способ связи —</option>
+          <option value="Телефон">📞 Телефон</option>
+          <option value="Telegram">✈️ Telegram</option>
+          <option value="ВКонтакте">💙 ВКонтакте</option>
+        </select>
+      </div>
+      <div class="form-field" id="f-contact-wrap">
+        <label id="f-contact-label">Контакт</label>
+        <input type="text" id="f-contact" placeholder="">
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:14px;background:var(--paper);border-radius:12px;border:1.5px solid rgba(10,124,110,0.10)" id="consent-wrap">
+        <input type="checkbox" id="f-consent" style="width:18px;height:18px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;cursor:pointer">
+        <label for="f-consent" style="font-size:0.78rem;color:var(--text2);line-height:1.55;cursor:pointer;font-weight:400">
+          Я согласен(а) с <a href="privacy.html" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">политикой обработки персональных данных</a> и принимаю условия <a href="offer.html" target="_blank" style="color:var(--teal);text-decoration:underline;text-underline-offset:2px">договора оферты</a>
+        </label>
+      </div>
+      <button class="btn-submit" onclick="submitForm()">Отправить заявку →</button>
+    </div>
+    <div class="success-msg" id="success-msg">
+      <span class="success-icon">🎉</span>
+      <div class="success-text">Заявка принята!</div>
+      <div class="success-sub">Свяжусь с вами в ближайшее время. Ждите сообщения!</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── ADMIN LOGIN ─── -->
+<div id="admin-login">
+  <div class="admin-login-box">
+    <div class="admin-login-logo">Осмос</div>
+    <div class="admin-login-sub">Панель управления</div>
+    <input type="text" id="admin-username" placeholder="Логин" autocomplete="off">
+    <input type="password" id="admin-password" placeholder="Пароль" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+    <button class="btn-admin-login" onclick="tryAdminLogin()">Войти</button>
+    <div class="admin-err" id="admin-err"></div>
+    <button onclick="closeAdminLogin()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:0.78rem;cursor:pointer;margin-top:16px;font-family:'Geologica',sans-serif;">← Вернуться на сайт</button>
+  </div>
+</div>
+
+<!-- ─── ADMIN PANEL ─── -->
+<div id="admin-panel">
+  <div class="admin-sidebar">
+    <div class="admin-sidebar-logo">
+      <div class="logo-name">Осмос</div>
+      <div class="logo-role">Администратор</div>
+    </div>
+    <div class="admin-nav">
+      <div class="admin-nav-item active" onclick="showAdminPage('leads')" id="anav-leads">
+        <span class="nav-icon">📬</span> Заявки
+        <span class="admin-badge" id="leads-badge" style="display:none">0</span>
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPage('edit-text')" id="anav-edit-text">
+        <span class="nav-icon">✏️</span> Тексты сайта
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPage('edit-prices')" id="anav-edit-prices">
+        <span class="nav-icon">💰</span> Цены и описания
+      </div>
+      <div class="admin-nav-item" onclick="showAdminPage('edit-features')" id="anav-edit-features">
+        <span class="nav-icon">⚙️</span> Возможности
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="admin-topbar-title" id="admin-page-title">Новые заявки</div>
+      <button class="btn-admin-close" onclick="closeAdminPanel()">← Вернуться на сайт</button>
+    </div>
+    <div class="admin-content">
+
+      <!-- LEADS -->
+      <div class="admin-page active" id="apage-leads">
+        <div class="admin-stat-grid">
+          <div class="admin-stat">
+            <div class="admin-stat-num" id="total-leads-num">0</div>
+            <div class="admin-stat-label">Всего заявок</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num" id="new-leads-num" style="color:var(--gold)">0</div>
+            <div class="admin-stat-label">Новых заявок</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-num" id="today-leads-num">0</div>
+            <div class="admin-stat-label">Сегодня</div>
+          </div>
+        </div>
+        <div class="leads-header">
+          <div class="leads-title">Заявки на запись</div>
+          <button class="btn-clear-leads" onclick="clearAllLeads()">Очистить все</button>
+        </div>
+        <div class="leads-table-wrap">
+          <table class="leads-table" id="leads-table">
+            <thead>
+              <tr>
+                <th>Имя</th>
+                <th>Предмет</th>
+                <th>Связь</th>
+                <th>Контакт</th>
+                <th>Тариф</th>
+                <th>Дата</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+          <div class="empty-leads" id="empty-leads">
+            <div class="empty-icon">📭</div>
+            <p>Заявок пока нет</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT TEXT -->
+      <div class="admin-page" id="apage-edit-text">
+        <div class="edit-section">
+          <div class="edit-section-title">🦸 Главный экран</div>
+          <div class="edit-grid">
+            <div class="edit-field"><label>Бейдж (над заголовком)</label><input id="e-hero-badge" value="Репетитор онлайн и офлайн"></div>
+            <div class="edit-field"><label>Подзаголовок</label><input id="e-hero-sub" value="Индивидуальный подход, живые объяснения и реальный результат. Готовимся к ЕГЭ, ОГЭ и олимпиадам вместе."></div>
+            <div class="edit-field"><label>Статистика 1</label><input id="e-stat1" value="95%"></div>
+            <div class="edit-field"><label>Статистика 2</label><input id="e-stat2" value="3 года"></div>
+            <div class="edit-field"><label>Статистика 3</label><input id="e-stat3" value="120+"></div>
+          </div>
+          <button class="btn-save" onclick="saveHeroText()">Сохранить <span class="save-ok" id="sok-hero">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🏗 Секция «Возможности»</div>
+          <div class="edit-field"><label>Заголовок</label><input id="e-feat-title" value="Всё для успешного обучения"></div>
+          <div class="edit-field" style="margin-top:12px"><label>Подзаголовок</label><input id="e-feat-sub" value="Современный формат занятий с опорой на результат. Каждый ученик получает персональный трек развития."></div>
+          <button class="btn-save" onclick="saveFeatText()">Сохранить <span class="save-ok" id="sok-feat">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🗺 Секция «Как работаем»</div>
+          <div class="edit-field"><label>Заголовок</label><input id="e-proc-title" value="Просто и понятно"></div>
+          <div class="edit-field" style="margin-top:12px"><label>Подзаголовок</label><input id="e-proc-sub" value="Четыре шага от заявки до первого занятия. Без сложностей."></div>
+          <button class="btn-save" onclick="saveProcText()">Сохранить <span class="save-ok" id="sok-proc">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">📞 Подвал и контакты</div>
+          <div class="edit-field"><label>Текст в подвале</label><input id="e-footer" value="Репетитор онлайн · Связь: Telegram / ВКонтакте"></div>
+          <div class="edit-field" style="margin-top:12px"><label>Призыв к действию (CTA)</label><input id="e-contact-sub" value="Первое занятие — знакомство и диагностика. Оставьте заявку и я свяжусь с вами в течение нескольких часов."></div>
+          <button class="btn-save" onclick="saveFooterText()">Сохранить <span class="save-ok" id="sok-footer">✓ Сохранено</span></button>
+        </div>
+      </div>
+
+      <!-- EDIT PRICES -->
+      <div class="admin-page" id="apage-edit-prices">
+        <div class="edit-section">
+          <div class="edit-section-title">👤 Индивидуальное занятие</div>
+          <div class="edit-grid">
+            <div class="edit-field"><label>Название</label><input id="e-p1-name" value="Личный формат"></div>
+            <div class="edit-field"><label>Описание формата (под именем)</label><input id="e-p1-type" value="1 ученик · 1 час"></div>
+            <div class="edit-field"><label>Цена (₽)</label><input id="e-p1-price" type="number" value="2000"></div>
+            <div class="edit-field"><label>Краткое описание</label><input id="e-p1-desc" value="Максимальное внимание каждой теме. Темп и программа подстраиваются под вас."></div>
+          </div>
+          <button class="btn-save" onclick="savePrices(1)">Сохранить <span class="save-ok" id="sok-p1">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">👥 Парное занятие</div>
+          <div class="edit-grid">
+            <div class="edit-field"><label>Название</label><input id="e-p2-name" value="Парные занятия"></div>
+            <div class="edit-field"><label>Описание формата</label><input id="e-p2-type" value="2 ученика · 80 минут"></div>
+            <div class="edit-field"><label>Цена (₽)</label><input id="e-p2-price" type="number" value="1400"></div>
+            <div class="edit-field"><label>Краткое описание</label><input id="e-p2-desc" value="Учитесь вместе с другом или одноклассником — экономнее, но с тем же качеством."></div>
+          </div>
+          <button class="btn-save" onclick="savePrices(2)">Сохранить <span class="save-ok" id="sok-p2">✓ Сохранено</span></button>
+        </div>
+        <div class="edit-section">
+          <div class="edit-section-title">🏫 Групповое занятие</div>
+          <div class="edit-grid">
+            <div class="edit-field"><label>Название</label><input id="e-p3-name" value="Группа"></div>
+            <div class="edit-field"><label>Описание формата</label><input id="e-p3-type" value="До 7 человек · 8 занятий"></div>
+            <div class="edit-field"><label>Цена (₽)</label><input id="e-p3-price" type="number" value="6000"></div>
+            <div class="edit-field"><label>Краткое описание</label><input id="e-p3-desc" value="До 7 учеников, 8 занятий по 80 минут. Лучшее соотношение цены и результата."></div>
+          </div>
+          <button class="btn-save" onclick="savePrices(3)">Сохранить <span class="save-ok" id="sok-p3">✓ Сохранено</span></button>
+        </div>
+      </div>
+
+      <!-- EDIT FEATURES -->
+      <div class="admin-page" id="apage-edit-features">
+        <div class="edit-section">
+          <div class="edit-section-title">⚙️ Карточки возможностей (6 карточек)</div>
+          <div id="features-edit-list"></div>
+          <button class="btn-save" onclick="saveFeatures()">Сохранить все <span class="save-ok" id="sok-features">✓ Сохранено</span></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Admin open button -->
+<button id="admin-open-btn" onclick="openAdminLogin()" title="Панель администратора">⚙</button>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───
+const ADMIN_LOGIN = 'admin';
+const ADMIN_PASS = 'osmos2024';
+let currentPlan = '';
+let leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+
+const defaultFeatures = [
+  {icon:'🧬', title:'Личный кабинет ученика', desc:'Все материалы, домашние задания и прогресс в одном месте. Удобный доступ с любого устройства.'},
+  {icon:'📝', title:'Интерактивные тесты', desc:'Тренировочные задания в формате ЕГЭ/ОГЭ с моментальной проверкой и разбором ошибок.'},
+  {icon:'📊', title:'Отслеживание прогресса', desc:'Наглядная статистика по темам и динамика роста баллов. Видите, как растёт уровень знаний.'},
+  {icon:'🗓', title:'Расписание и уведомления', desc:'Удобное бронирование занятий, напоминания о домашних заданиях и предстоящих уроках.'},
+  {icon:'💬', title:'Прямая связь с педагогом', desc:'Задавайте вопросы между занятиями. Быстрые ответы и поддержка при подготовке к экзаменам.'},
+  {icon:'🏆', title:'Пробные экзамены', desc:'Полноценные пробники в условиях, максимально приближенных к реальному ЕГЭ и ОГЭ.'}
+];
+
+let features = JSON.parse(localStorage.getItem('osmos_features') || JSON.stringify(defaultFeatures));
+
+// ─── NAV SCROLL ───
+window.addEventListener('scroll', () => {
+  document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 10);
+}, {passive: true});
+
+// ─── MODAL ───
+function openModal(plan) {
+  currentPlan = plan;
+  document.getElementById('enroll-modal').classList.add('open');
+  document.getElementById('modal-form-wrap').style.display = 'block';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('modal-plan-tag').textContent = capitalize(plan);
+  const info = document.getElementById('form-plan-info');
+  const planMap = {
+    'индивидуальное занятие': '👤 Индивидуально — 2000 ₽/час',
+    'парное занятие': '👥 Парное — 1400 ₽/чел · 80 мин',
+    'групповое занятие': '🏫 Группа — 6000 ₽ за 8 занятий'
+  };
+  if (planMap[plan]) {
+    info.textContent = planMap[plan];
+    info.classList.add('show');
+  } else {
+    info.classList.remove('show');
+  }
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-method').value = '';
+  document.getElementById('f-contact').value = '';
+  document.getElementById('f-consent').checked = false;
+  // pre-select subject if plan is a subject name
+  const subjectSel = document.getElementById('f-subject');
+  if (plan === 'биология') subjectSel.value = 'Биология ЕГЭ';
+  else if (plan === 'химия') subjectSel.value = 'Химия ЕГЭ';
+  else subjectSel.value = '';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEnrollModal() {
+  document.getElementById('enroll-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('f-method').addEventListener('change', function() {
+  const v = this.value;
+  const lbl = document.getElementById('f-contact-label');
+  const inp = document.getElementById('f-contact');
+  if (v === 'Телефон') { lbl.textContent = 'Номер телефона'; inp.placeholder = '+7 999 123-45-67'; }
+  else if (v === 'Telegram') { lbl.textContent = 'Telegram username'; inp.placeholder = '@username'; }
+  else if (v === 'ВКонтакте') { lbl.textContent = 'Ссылка ВКонтакте'; inp.placeholder = 'vk.com/id...'; }
+  else { lbl.textContent = 'Контакт'; inp.placeholder = ''; }
+});
+
+function submitForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const method = document.getElementById('f-method').value;
+  const contact = document.getElementById('f-contact').value.trim();
+  const subject = document.getElementById('f-subject').value;
+  const consent = document.getElementById('f-consent').checked;
+  if (!name) { showToast('⚠️ Введите ваше имя'); return; }
+  if (!subject) { showToast('⚠️ Выберите предмет'); return; }
+  if (!method) { showToast('⚠️ Выберите способ связи'); return; }
+  if (!contact) { showToast('⚠️ Укажите контакт'); return; }
+  if (!consent) {
+    document.getElementById('consent-wrap').style.borderColor = '#e53e3e';
+    document.getElementById('consent-wrap').style.background = 'rgba(229,62,62,0.05)';
+    showToast('⚠️ Необходимо согласие на обработку данных');
+    setTimeout(() => {
+      document.getElementById('consent-wrap').style.borderColor = 'rgba(10,124,110,0.10)';
+      document.getElementById('consent-wrap').style.background = 'var(--paper)';
+    }, 2000);
+    return;
+  }
+
+  const now = new Date();
+  const lead = {
+    id: Date.now(),
+    name, method, contact, subject,
+    plan: currentPlan || '—',
+    date: now.toLocaleDateString('ru-RU'),
+    time: now.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}),
+    isNew: true
+  };
+  leads.unshift(lead);
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  updateLeadsBadge();
+
+  document.getElementById('modal-form-wrap').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'block';
+  showToast('🎉 Заявка отправлена!');
+}
+
+// ─── ADMIN LOGIN ───
+function openAdminLogin() {
+  document.getElementById('admin-login').classList.add('open');
+  document.getElementById('admin-username').value = '';
+  document.getElementById('admin-password').value = '';
+  document.getElementById('admin-err').textContent = '';
+}
+function closeAdminLogin() {
+  document.getElementById('admin-login').classList.remove('open');
+}
+function tryAdminLogin() {
+  const u = document.getElementById('admin-username').value.trim();
+  const p = document.getElementById('admin-password').value;
+  if (u === ADMIN_LOGIN && p === ADMIN_PASS) {
+    document.getElementById('admin-login').classList.remove('open');
+    openAdminPanel();
+  } else {
+    document.getElementById('admin-err').textContent = 'Неверный логин или пароль';
+  }
+}
+
+// ─── ADMIN PANEL ───
+function openAdminPanel() {
+  document.getElementById('admin-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderLeads();
+  renderFeaturesEdit();
+  updateLeadsBadge();
+  loadAdminFields();
+}
+function closeAdminPanel() {
+  document.getElementById('admin-panel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showAdminPage(id) {
+  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('apage-' + id).classList.add('active');
+  document.getElementById('anav-' + id).classList.add('active');
+  const titles = {
+    leads: 'Новые заявки',
+    'edit-text': 'Редактировать тексты сайта',
+    'edit-prices': 'Цены и описания тарифов',
+    'edit-features': 'Карточки возможностей'
+  };
+  document.getElementById('admin-page-title').textContent = titles[id] || '';
+}
+
+// ─── LEADS ───
+function renderLeads() {
+  const tbody = document.getElementById('leads-tbody');
+  const empty = document.getElementById('empty-leads');
+  if (!leads.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('total-leads-num').textContent = 0;
+    document.getElementById('new-leads-num').textContent = 0;
+    document.getElementById('today-leads-num').textContent = 0;
+    return;
+  }
+  empty.style.display = 'none';
+  const today = new Date().toLocaleDateString('ru-RU');
+  let newCount = 0, todayCount = 0;
+  tbody.innerHTML = leads.map(l => {
+    if (l.isNew) newCount++;
+    if (l.date === today) todayCount++;
+    return `<tr>
+      <td><b>${esc(l.name)}</b>${l.isNew ? ' <span class="lead-new">новая</span>':''}</td>
+      <td>${l.subject ? `<span class="lead-plan">${esc(l.subject)}</span>` : '—'}</td>
+      <td>${esc(l.method)}</td>
+      <td><span class="contact-badge">${esc(l.contact)}</span></td>
+      <td><span class="lead-plan">${esc(l.plan)}</span></td>
+      <td style="white-space:nowrap;font-size:0.8rem;color:var(--text3)">${esc(l.date)} ${esc(l.time)}</td>
+      <td><button onclick="deleteLead(${l.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:4px 8px;border-radius:6px;transition:all 0.2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('total-leads-num').textContent = leads.length;
+  document.getElementById('new-leads-num').textContent = newCount;
+  document.getElementById('today-leads-num').textContent = todayCount;
+}
+
+function deleteLead(id) {
+  leads = leads.filter(l => l.id !== id);
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  renderLeads();
+  updateLeadsBadge();
+}
+function clearAllLeads() {
+  if (!confirm('Удалить все заявки?')) return;
+  leads = [];
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  renderLeads();
+  updateLeadsBadge();
+  showToast('🗑 Заявки очищены');
+}
+function markLeadsRead() {
+  leads = leads.map(l => ({...l, isNew: false}));
+  localStorage.setItem('osmos_leads', JSON.stringify(leads));
+  updateLeadsBadge();
+}
+function updateLeadsBadge() {
+  const newCount = leads.filter(l => l.isNew).length;
+  const badge = document.getElementById('leads-badge');
+  if (newCount > 0) {
+    badge.style.display = 'inline';
+    badge.textContent = newCount;
+    badge.classList.add('pulse-badge');
+  } else {
+    badge.style.display = 'none';
+    badge.classList.remove('pulse-badge');
+  }
+}
+
+// ─── SAVE TEXTS ───
+function loadAdminFields() {
+  const d = s => localStorage.getItem('osmos_' + s);
+  setVal('e-hero-badge', d('hero-badge') || 'Репетитор онлайн');
+  setVal('e-hero-sub', d('hero-sub') || document.getElementById('hero-sub').textContent);
+  setVal('e-stat1', d('stat1') || '95%');
+  setVal('e-stat2', d('stat2') || '3 года');
+  setVal('e-stat3', d('stat3') || '120+');
+  setVal('e-feat-title', d('feat-title') || 'Всё для успешного обучения');
+  setVal('e-feat-sub', d('feat-sub') || document.getElementById('features-sub').textContent);
+  setVal('e-proc-title', d('proc-title') || 'Просто и понятно');
+  setVal('e-proc-sub', d('proc-sub') || document.getElementById('process-sub').textContent);
+  setVal('e-footer', d('footer') || 'Репетитор онлайн · Связь: Telegram / ВКонтакте');
+  setVal('e-contact-sub', d('contact-sub') || '30–40 минут онлайн с педагогом: познакомимся, разберём пробелы и составим план. Оставьте заявку — свяжусь в ближайшее время.');
+  setVal('e-p1-name', d('p1-name') || 'Личный формат');
+  setVal('e-p1-type', d('p1-type') || '1 ученик · 1 час');
+  setVal('e-p1-price', d('p1-price') || '2000');
+  setVal('e-p1-desc', d('p1-desc') || document.getElementById('p1-desc').textContent);
+  setVal('e-p2-name', d('p2-name') || 'Парные занятия');
+  setVal('e-p2-type', d('p2-type') || '2 ученика · 80 минут');
+  setVal('e-p2-price', d('p2-price') || '1400');
+  setVal('e-p2-desc', d('p2-desc') || document.getElementById('p2-desc').textContent);
+  setVal('e-p3-name', d('p3-name') || 'Группа');
+  setVal('e-p3-type', d('p3-type') || 'До 7 человек · 8 занятий');
+  setVal('e-p3-price', d('p3-price') || '6000');
+  setVal('e-p3-desc', d('p3-desc') || document.getElementById('p3-desc').textContent);
+}
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+function saveHeroText() {
+  save('hero-badge', 'e-hero-badge');
+  save('hero-sub', 'e-hero-sub');
+  save('stat1', 'e-stat1');
+  save('stat2', 'e-stat2');
+  save('stat3', 'e-stat3');
+  applyTexts(); flashOk('sok-hero');
+}
+function saveFeatText() {
+  save('feat-title', 'e-feat-title');
+  save('feat-sub', 'e-feat-sub');
+  applyTexts(); flashOk('sok-feat');
+}
+function saveProcText() {
+  save('proc-title', 'e-proc-title');
+  save('proc-sub', 'e-proc-sub');
+  applyTexts(); flashOk('sok-proc');
+}
+function saveFooterText() {
+  save('footer', 'e-footer');
+  save('contact-sub', 'e-contact-sub');
+  applyTexts(); flashOk('sok-footer');
+}
+function savePrices(n) {
+  save('p'+n+'-name', 'e-p'+n+'-name');
+  save('p'+n+'-type', 'e-p'+n+'-type');
+  save('p'+n+'-price', 'e-p'+n+'-price');
+  save('p'+n+'-desc', 'e-p'+n+'-desc');
+  applyTexts(); flashOk('sok-p'+n);
+}
+function saveFeatures() {
+  const list = [];
+  for (let i=0; i<6; i++) {
+    list.push({
+      icon: document.getElementById('ef-icon-'+i)?.value || features[i].icon,
+      title: document.getElementById('ef-title-'+i)?.value || features[i].title,
+      desc: document.getElementById('ef-desc-'+i)?.value || features[i].desc
+    });
+  }
+  features = list;
+  localStorage.setItem('osmos_features', JSON.stringify(features));
+  renderFeaturesGrid();
+  flashOk('sok-features');
+}
+function save(key, inputId) {
+  const el = document.getElementById(inputId);
+  if (el) localStorage.setItem('osmos_' + key, el.value);
+}
+function gv(key, fallback) {
+  return localStorage.getItem('osmos_' + key) || fallback;
+}
+function applyTexts() {
+  setText('hero-badge-text', gv('hero-badge',''));
+  setText('hero-sub', gv('hero-sub',''));
+  setText('stat1', gv('stat1',''));
+  setText('stat2', gv('stat2',''));
+  setText('stat3', gv('stat3',''));
+  setText('features-title', gv('feat-title',''));
+  setText('features-sub', gv('feat-sub',''));
+  setText('process-title', gv('proc-title',''));
+  setText('process-sub', gv('proc-sub',''));
+  setText('footer-contacts', gv('footer',''));
+  setText('contact-sub', gv('contact-sub',''));
+  // prices
+  for (let n=1;n<=3;n++) {
+    const pn = gv('p'+n+'-price','');
+    if (pn) setText('p'+n+'-price', pn);
+    const nm = gv('p'+n+'-name','');
+    if (nm) setText('p'+n+'-name', nm);
+    const tp = gv('p'+n+'-type','');
+    if (tp) setText('p'+n+'-type', tp);
+    const ds = gv('p'+n+'-desc','');
+    if (ds) setText('p'+n+'-desc', ds);
+  }
+}
+function setText(id, val) {
+  if (!val) return;
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function renderFeaturesGrid() {
+  const grid = document.getElementById('features-grid');
+  grid.innerHTML = features.map((f,i) => `
+    <div class="feature-card">
+      <span class="feature-icon">${esc(f.icon)}</span>
+      <div class="feature-title">${esc(f.title)}</div>
+      <div class="feature-desc">${esc(f.desc)}</div>
+    </div>
+  `).join('');
+}
+function renderFeaturesEdit() {
+  const list = document.getElementById('features-edit-list');
+  list.innerHTML = features.map((f,i) => `
+    <div style="border:1px solid rgba(10,124,110,0.10);border-radius:12px;padding:16px 20px;margin-bottom:12px">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--text3);margin-bottom:12px;letter-spacing:0.06em;text-transform:uppercase">Карточка ${i+1}</div>
+      <div class="edit-grid">
+        <div class="edit-field"><label>Иконка (эмодзи)</label><input id="ef-icon-${i}" value="${esc(f.icon)}"></div>
+        <div class="edit-field"><label>Заголовок</label><input id="ef-title-${i}" value="${esc(f.title)}"></div>
+      </div>
+      <div class="edit-field" style="margin-top:10px"><label>Описание</label><textarea id="ef-desc-${i}">${esc(f.desc)}</textarea></div>
+    </div>
+  `).join('');
+}
+
+function flashOk(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.opacity = '1';
+  showToast('✓ Изменения сохранены');
+  setTimeout(() => el.style.opacity = '0', 2500);
+}
+
+
+// ─── TOAST ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── UTILS ───
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── WELCOME CONSENT MODAL ───
+function initWelcomeConsent() {
+  const bg = document.getElementById('welcome-consent-bg');
+  if (!localStorage.getItem('osmos_welcome_consent')) {
+    bg.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  } else {
+    bg.style.display = 'none';
+  }
+}
+function toggleWcBtn(checkbox) {
+  const btn = document.getElementById('btn-wc-accept');
+  if (checkbox.checked) {
+    btn.classList.add('active');
+  } else {
+    btn.classList.remove('active');
+  }
+}
+function acceptWelcomeConsent() {
+  localStorage.setItem('osmos_welcome_consent', '1');
+  localStorage.setItem('osmos_consent', '1');
+  closeWelcomeConsent();
+}
+function closeWelcomeConsent() {
+  const bg = document.getElementById('welcome-consent-bg');
+  bg.style.transition = 'opacity 0.35s ease';
+  bg.style.opacity = '0';
+  document.body.style.overflow = '';
+  setTimeout(() => { bg.style.display = 'none'; }, 350);
+}
+
+// ─── INIT ───
+window.addEventListener('load', () => {
+  applyTexts();
+  renderFeaturesGrid();
+  updateLeadsBadge();
+  initWelcomeConsent();
+});
+
+// Mark leads read when opening leads tab
+document.getElementById('anav-leads').addEventListener('click', () => {
+  setTimeout(markLeadsRead, 1500);
+});
+</script>
+</body>
+</html>
