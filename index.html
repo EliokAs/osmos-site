@@ -1366,17 +1366,18 @@ function tryAdminLogin() {
 function openAdminPanel() {
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
-  // Рендерим текущие leads сразу (они уже актуальны), затем обновляем из облака
   renderLeads();
   updateLeadsBadge();
   loadLeadsFromCloud();
   renderFeaturesEdit();
   loadAdminFields();
   loadApiFields();
+  startAdminRefresh();
 }
 function closeAdminPanel() {
   document.getElementById('admin-panel').classList.remove('open');
   document.body.style.overflow = '';
+  stopAdminRefresh();
 }
 
 function showAdminPage(id) {
@@ -1685,27 +1686,50 @@ function loadApiFields() {
   if (status) status.textContent = (k && b) ? '✅ Подключено' : '⚠️ Не настроено — заявки сохраняются только локально';
 }
 
-// ─── SCROLL POSITION RESTORE ───
+// ─── SCROLL + ADMIN STATE RESTORE ───
 window.addEventListener('beforeunload', () => {
   sessionStorage.setItem('osmos_scroll', window.scrollY);
+  const adminOpen = document.getElementById('admin-panel').classList.contains('open');
+  sessionStorage.setItem('osmos_admin_open', adminOpen ? '1' : '');
+  if (adminOpen) {
+    const activePage = document.querySelector('.admin-page.active');
+    if (activePage) sessionStorage.setItem('osmos_admin_page', activePage.id.replace('apage-', ''));
+  }
 });
 
+// ─── ADMIN AUTO-REFRESH ───
+let adminRefreshTimer = null;
+function startAdminRefresh() {
+  stopAdminRefresh();
+  adminRefreshTimer = setInterval(async () => {
+    if (!document.getElementById('admin-panel').classList.contains('open')) { stopAdminRefresh(); return; }
+    await loadLeadsFromCloud();
+  }, 15000);
+}
+function stopAdminRefresh() {
+  if (adminRefreshTimer) { clearInterval(adminRefreshTimer); adminRefreshTimer = null; }
+}
+
 // ─── INIT ───
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   applyTexts();
   renderFeaturesGrid();
-  loadLeadsFromCloud();
+  await loadLeadsFromCloud();
   initWelcomeConsent();
 
-  // Восстанавливаем позицию скролла после обновления страницы
   const savedScroll = sessionStorage.getItem('osmos_scroll');
   if (savedScroll) {
     document.documentElement.style.scrollBehavior = 'auto';
     window.scrollTo(0, parseInt(savedScroll, 10));
     sessionStorage.removeItem('osmos_scroll');
-    requestAnimationFrame(() => {
-      document.documentElement.style.scrollBehavior = '';
-    });
+    requestAnimationFrame(() => { document.documentElement.style.scrollBehavior = ''; });
+  }
+
+  if (sessionStorage.getItem('osmos_admin_open')) {
+    sessionStorage.removeItem('osmos_admin_open');
+    openAdminPanel();
+    const page = sessionStorage.getItem('osmos_admin_page');
+    if (page) { sessionStorage.removeItem('osmos_admin_page'); showAdminPage(page); }
   }
 });
 
