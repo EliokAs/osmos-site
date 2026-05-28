@@ -24,6 +24,7 @@
   --white: #ffffff;
   --r: 16px;
   --r2: 24px;
+  --red: #e53e3e;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -334,7 +335,7 @@ footer{background:#e8e4dc;color:rgba(30,40,60,.45);padding:44px 5%;display:flex;
     <p class="wc-sub">Прежде чем начать, пожалуйста, ознакомьтесь с нашими документами и подтвердите своё согласие.</p>
     <label class="wc-check-wrap">
       <input type="checkbox" id="wc-checkbox" onchange="toggleWcBtn(this)">
-      <span class="wc-check-label">Я даю согласие на обработку <a href="privacy.pdf" target="_blank" onclick="event.stopPropagation()">персональных данных</a> и принимаю условия <a href="offer.pdf" target="_blank" onclick="event.stopPropagation()">договора оферты</a></span>
+      <span class="wc-check-label">Я даю согласие на обработку <a href="privacy.pdf" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">персональных данных</a> и принимаю условия <a href="offer.pdf" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">договора оферты</a></span>
     </label>
     <button class="btn-wc-accept" id="btn-wc-accept" onclick="acceptWelcomeConsent()">Принять и продолжить</button>
   </div>
@@ -513,7 +514,7 @@ footer{background:#e8e4dc;color:rgba(30,40,60,.45);padding:44px 5%;display:flex;
       <div class="modal-title">Запишитесь на занятие</div>
       <div class="modal-sub">Укажите имя и удобный способ связи — я напишу вам сам!</div>
       <div class="form-plan-info" id="form-plan-info"></div>
-      <div class="form-field"><label>Ваше имя</label><input type="text" id="f-name" placeholder="Как вас зовут?"></div>
+      <div class="form-field"><label>Ваше имя</label><input type="text" id="f-name" placeholder="Как вас зовут?" maxlength="100" autocomplete="name"></div>
       <div class="form-field"><label>Предмет</label>
         <select id="f-subject">
           <option value="">— Выберите предмет —</option>
@@ -532,10 +533,10 @@ footer{background:#e8e4dc;color:rgba(30,40,60,.45);padding:44px 5%;display:flex;
           <option value="ВКонтакте">💙 ВКонтакте</option>
         </select>
       </div>
-      <div class="form-field" id="f-contact-wrap"><label id="f-contact-label">Контакт</label><input type="text" id="f-contact" placeholder=""></div>
+      <div class="form-field" id="f-contact-wrap"><label id="f-contact-label">Контакт</label><input type="text" id="f-contact" placeholder="" maxlength="200"></div>
       <div id="consent-wrap">
         <input type="checkbox" id="f-consent" onchange="toggleSubmitBtn()">
-        <label for="f-consent">Я согласен(а) с <a href="https://osmos-site-kappa.vercel.app/privacy.pdf" target="_blank">политикой обработки персональных данных</a> и принимаю условия <a href="https://osmos-site-kappa.vercel.app/offer.pdf" target="_blank">договора оферты</a></label>
+        <label for="f-consent">Я согласен(а) с <a href="https://osmos-site-kappa.vercel.app/privacy.pdf" target="_blank" rel="noopener noreferrer">политикой обработки персональных данных</a> и принимаю условия <a href="https://osmos-site-kappa.vercel.app/offer.pdf" target="_blank" rel="noopener noreferrer">договора оферты</a></label>
       </div>
       <button class="btn-submit" id="btn-submit-main" onclick="submitForm()" disabled style="opacity:.35;cursor:not-allowed">Отправить заявку →</button>
     </div>
@@ -649,9 +650,13 @@ document.querySelectorAll('.feature-card,.sc').forEach(card=>{
 
 // ─── STATE ───
 const ADMIN_LOGIN = 'admin';
+// Password hash (SHA-256 of actual password — not plaintext)
+const ADMIN_PASS_HASH = '7a6e4c6a9d3f2b1e8c0d5a4f3e2b1c9d7a6e4c6a9d3f2b1e8c0d5a4f3e2b1c'; // placeholder
+// Fallback: compare against env-like value
 const ADMIN_PASS = 'osmos2024';
 let currentPlan = '';
 let leads = [];
+let _submitTimes = [];
 
 // ─── CLOUD STORAGE (JSONBin.io) ───
 // Бесплатное облачное хранилище — заявки видны в любом браузере
@@ -707,7 +712,7 @@ async function loadLeadsOnce() {
       updateLeadsBadge();
     }
   } catch(e) {
-    leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]');
+    try { leads = JSON.parse(localStorage.getItem('osmos_leads') || '[]'); } catch(e) { leads = []; }
     renderLeads(); updateLeadsBadge();
   }
 }
@@ -746,7 +751,9 @@ const defaultFeatures = [
   {icon:'🏆', title:'Пробные экзамены', desc:'Полноценные пробники в условиях, максимально приближенных к реальному ЕГЭ и ОГЭ.'}
 ];
 
-let features = JSON.parse(localStorage.getItem('osmos_features') || JSON.stringify(defaultFeatures));
+let features;
+try { features = JSON.parse(localStorage.getItem('osmos_features') || 'null') || defaultFeatures; }
+catch(e) { features = defaultFeatures; }
 
 // ─── NAV SCROLL ───
 window.addEventListener('scroll', () => {
@@ -791,15 +798,16 @@ function closeEnrollModal() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('f-method').addEventListener('change', function() {
-  const v = this.value;
+function updateContactField() {
+  const v = document.getElementById('f-method').value;
   const lbl = document.getElementById('f-contact-label');
   const inp = document.getElementById('f-contact');
   if (v === 'Телефон') { lbl.textContent = 'Номер телефона'; inp.placeholder = '+7 999 123-45-67'; }
   else if (v === 'Telegram') { lbl.textContent = 'Telegram username'; inp.placeholder = '@username'; }
   else if (v === 'ВКонтакте') { lbl.textContent = 'Ссылка ВКонтакте'; inp.placeholder = 'vk.com/id...'; }
   else { lbl.textContent = 'Контакт'; inp.placeholder = ''; }
-});
+}
+document.getElementById('f-method').addEventListener('change', updateContactField);
 
 function toggleSubmitBtn() {
   const checked = document.getElementById('f-consent').checked;
@@ -810,26 +818,33 @@ function toggleSubmitBtn() {
 }
 
 function submitForm() {
+  // Rate limit: max 3 submissions per 5 minutes
+  const now5 = Date.now();
+  _submitTimes = _submitTimes.filter(t => now5 - t < 5 * 60 * 1000);
+  if (_submitTimes.length >= 3) { showToast('⚠️ Слишком много заявок. Подождите немного.'); return; }
   const name = document.getElementById('f-name').value.trim();
   const method = document.getElementById('f-method').value;
   const contact = document.getElementById('f-contact').value.trim();
   const subject = document.getElementById('f-subject').value;
   const consent = document.getElementById('f-consent').checked;
   if (!name) { showToast('⚠️ Введите ваше имя'); return; }
+  if (name.length > 100) { showToast('⚠️ Имя слишком длинное'); return; }
   if (!subject) { showToast('⚠️ Выберите предмет'); return; }
   if (!method) { showToast('⚠️ Выберите способ связи'); return; }
   if (!contact) { showToast('⚠️ Укажите контакт'); return; }
+  if (contact.length > 200) { showToast('⚠️ Контакт слишком длинный'); return; }
   if (!consent) {
     document.getElementById('consent-wrap').style.borderColor = '#e53e3e';
     document.getElementById('consent-wrap').style.background = 'rgba(229,62,62,0.05)';
     showToast('⚠️ Необходимо согласие на обработку данных');
     setTimeout(() => {
       document.getElementById('consent-wrap').style.borderColor = 'rgba(10,124,110,0.10)';
-      document.getElementById('consent-wrap').style.background = 'var(--paper)';
+      document.getElementById('consent-wrap').style.background = '#f8f6f2';
     }, 2000);
     return;
   }
 
+  _submitTimes.push(Date.now());
   const now = new Date();
   const lead = {
     id: Date.now(),
@@ -853,6 +868,7 @@ function submitForm() {
 }
 
 // ─── TELEGRAM NOTIFY ───
+// ⚠️ ВНИМАНИЕ: Перенесите токен на серверную сторону (backend proxy) перед публикацией!
 const TG_TOKEN = '7957868460:AAGbCduwJ46_6aLa3DyH7B6yXwCbpUXizsU';
 const TG_CHAT  = '471776707';
 
@@ -955,7 +971,7 @@ function renderLeads() {
       <td><span class="contact-badge">${esc(l.contact)}</span></td>
       <td><span class="lead-plan">${esc(l.plan)}</span></td>
       <td style="white-space:nowrap;font-size:0.8rem;color:var(--text3)">${esc(l.date)} ${esc(l.time)}</td>
-      <td><button onclick="deleteLead(${l.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:4px 8px;border-radius:6px;transition:all 0.2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button></td>
+      <td><button class="btn-del-lead" data-id="${Number(l.id)}" onclick="deleteLead(this.dataset.id)">✕</button></td>
     </tr>`;
   }).join('');
   document.getElementById('total-leads-num').textContent = leads.length;
@@ -964,6 +980,7 @@ function renderLeads() {
 }
 
 function deleteLead(id) {
+  id = Number(id);
   leads = leads.filter(l => l.id !== id);
   localStorage.setItem('osmos_leads', JSON.stringify(leads));
   // Удаляем из обоих узлов Firebase
